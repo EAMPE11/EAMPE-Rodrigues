@@ -290,7 +290,7 @@
     </div>
   </div>
 
-  <!-- ✅ Firebase (Realtime Database) -->
+  <!-- Firebase Realtime DB -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -308,71 +308,203 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-
-    // Tudo do sistema fica aqui:
     const dadosRef = ref(db, "dados");
 
-    // expõe helpers pro script normal (não-module)
+    // ✅ CARGA INICIAL: só entra se o banco estiver vazio
+    const DEFAULT_DADOS = {
+      "1101": { nome: "GUSTAVO", notas: [] },
+      "1102": { nome: "MISAEL", notas: [] },
+      "1103": { nome: "BRUNA", notas: [] },
+      "1104": { nome: "BRAYAN", notas: [] },
+      "1105": { nome: "LAURA", notas: [] },
+      "1106": { nome: "FERREIRA", notas: [] },
+      "1107": { nome: "EVENLY MORAIS", notas: [] },
+      "1108": { nome: "LIRA", notas: [] },
+      "1109": { nome: "MARCELLY", notas: [] },
+      "1110": { nome: "ANA CAROLINA", notas: [] },
+      "1111": { nome: "MOREIRA", notas: [] },
+      "1112": { nome: "JÚLIA SILVA", notas: [] },
+      "1113": { nome: "DA MATA", notas: [] },
+      "1114": { nome: "LAVÍNIA", notas: [] },
+      "1115": { nome: "JULLIA CALDAS", notas: [] },
+      "1116": { nome: "PIERRE", notas: [] },
+      "1117": { nome: "LINDEMBERG", notas: [] },
+      "1118": { nome: "SOARES", notas: [] },
+      "1119": { nome: "LINCOLN", notas: [] },
+      "1120": { nome: "DE PAULA", notas: [] },
+      "1121": { nome: "MAYSA", notas: [] },
+      "1122": { nome: "EVERSON", notas: [] },
+      "1123": { nome: "WALLISON", notas: [] },
+      "1124": { nome: "SALVADOR", notas: [] },
+      "1125": { nome: "RODRIGUES", notas: [] },
+      "1126": { nome: "MOURA", notas: [] },
+      "1127": { nome: "DAVI", notas: [] },
+      "1128": { nome: "JULLYANO", notas: [] },
+
+      "1201": { nome: "AZEVEDO", notas: [] },
+      "1202": { nome: "EDUARDA PIMENTEL", notas: [] },
+      "1203": { nome: "CAMARA", notas: [] },
+      "1204": { nome: "JEREMIAS", notas: [] },
+      "1205": { nome: "CAMILLY", notas: [] },
+      "1206": { nome: "LOPES", notas: [] },
+      "1207": { nome: "ÁTILA", notas: [] },
+      "1208": { nome: "JHONATAN", notas: [] },
+      "1209": { nome: "MARAN", notas: [] },
+      "1210": { nome: "MARCOS PAULO", notas: [] },
+      "1211": { nome: "HENRIQUE", notas: [] },
+      "1212": { nome: "ANA CLARA", notas: [] },
+      "1213": { nome: "RAFAEL", notas: [] },
+      "1214": { nome: "LOPES SANTOS", notas: [] },
+      "1215": { nome: "JÚLIA FLORO", notas: [] },
+      "1216": { nome: "NATHAN", notas: [] },
+      "1217": { nome: "VINÍCIUS", notas: [] },
+      "1218": { nome: "KAUÊ", notas: [] },
+      "1219": { nome: "OLIVEIRA", notas: [] },
+      "1220": { nome: "ALICY LADEIRA", notas: [] },
+      "1221": { nome: "BRUNA DUARTE", notas: [] },
+      "1222": { nome: "PEDRO SILVA", notas: [] },
+      "1223": { nome: "ARTHUR", notas: [] },
+      "1224": { nome: "ISABELLA CARDOSO", notas: [] },
+      "1225": { nome: "THALITA PAIVA", notas: [] },
+      "1226": { nome: "CRUZ", notas: [] },
+      "1227": { nome: "MACIEL", notas: [] },
+      "1228": { nome: "HUMBERTO", notas: [] },
+      "1229": { nome: "ARAUJO", notas: [] },
+
+      "1301": { nome: "BATISTA", notas: [] },
+      "1302": { nome: "VITÓRIA CAMPOS", notas: [] },
+      "1303": { nome: "ANGELO", notas: [] },
+      "1304": { nome: "HUGO", notas: [] },
+      "1305": { nome: "ANA", notas: [] },
+      "1306": { nome: "PRAZERES", notas: [] },
+      "1307": { nome: "ALANIS", notas: [] },
+      "1308": { nome: "NATHÁLIA", notas: [] },
+      "1309": { nome: "JOÃO", notas: [] },
+      "1310": { nome: "LETICIA", notas: [] },
+      "1311": { nome: "PAIXÃO", notas: [] },
+      "1312": { nome: "SILVA", notas: [] },
+      "1313": { nome: "NICKOLAS", notas: [] },
+      "1314": { nome: "DANIEL", notas: [] },
+      "1315": { nome: "EVANDRO", notas: [] },
+      "1316": { nome: "CLARA", notas: [] },
+      "1317": { nome: "LUÍS", notas: [] },
+      "1318": { nome: "ANDRESSA", notas: [] },
+      "1319": { nome: "CAROLINE", notas: [] },
+      "1320": { nome: "RIBEIRO", notas: [] },
+      "1321": { nome: "ESTEVÃO", notas: [] },
+      "1322": { nome: "NOUZINHO", notas: [] },
+      "1323": { nome: "MARCELO", notas: [] },
+      "1324": { nome: "KAIQUE", notas: [] },
+      "1325": { nome: "OTÁVIO", notas: [] },
+      "1326": { nome: "CAIO", notas: [] },
+      "1327": { nome: "MERCÊS", notas: [] },
+      "1328": { nome: "NASCIMENTO", notas: [] },
+      "1329": { nome: "CAIO MURILO", notas: [] },
+
+      "2101": { nome: "ANA SOUZA", notas: [] },
+      "2102": { nome: "LUÍSA", notas: [] },
+      "2103": { nome: "CESAR", notas: [] },
+      "2104": { nome: "RESSURREIÇÃO", notas: [] },
+      "2105": { nome: "MAURÍCIO", notas: [] },
+      "2106": { nome: "DAIANE", notas: [] },
+      "2107": { nome: "BRUNO MOTA", notas: [] },
+      "2108": { nome: "J. SILVA", notas: [] },
+      "2109": { nome: "LUCIA", notas: [] },
+      "2110": { nome: "RAYANNE", notas: [] },
+      "2111": { nome: "QUEZIA", notas: [] },
+      "2112": { nome: "MARINHO", notas: [] },
+      "2113": { nome: "IGOR", notas: [] },
+      "2114": { nome: "FRANÇA", notas: [] },
+      "2115": { nome: "FERRAZ", notas: [] },
+      "2116": { nome: "CAROLINA", notas: [] },
+      "2117": { nome: "LORENA", notas: [] },
+      "2118": { nome: "CAUÃ", notas: [] },
+      "2119": { nome: "RAMOS", notas: [] },
+      "2120": { nome: "PABLO", notas: [] },
+      "2121": { nome: "VIANA", notas: [] },
+      "2122": { nome: "ELIEL", notas: [] },
+      "2123": { nome: "JEAN", notas: [] },
+      "2124": { nome: "TAVEIRA", notas: [] },
+      "2125": { nome: "VITOR SILVA", notas: [] },
+      "2126": { nome: "RUAN PABLO", notas: [] },
+      "2127": { nome: "CERQUEIRA", notas: [] },
+      "2128": { nome: "ANDREY MACIEL", notas: [] },
+      "2129": { nome: "G. SOUZA", notas: [] },
+
+      "2201": { nome: "STELLA", notas: [] },
+      "2202": { nome: "STEPHANE", notas: [] },
+      "2203": { nome: "CORDEIRO", notas: [] },
+      "2204": { nome: "LÔA MORAES", notas: [] },
+      "2205": { nome: "TAVARES", notas: [] },
+      "2206": { nome: "WILLYAN", notas: [] },
+      "2207": { nome: "ÁGATA", notas: [] },
+      "2208": { nome: "MARIA", notas: [] },
+      "2209": { nome: "GUILHERME", notas: [] },
+      "2210": { nome: "MARIA EDUARDA", notas: [] },
+      "2211": { nome: "REGINA", notas: [] },
+      "2212": { nome: "THALITA", notas: [] },
+      "2213": { nome: "COSTA", notas: [] },
+      "2214": { nome: "ALVES", notas: [] },
+      "2215": { nome: "DUARTE", notas: [] },
+      "2216": { nome: "CARVALHO", notas: [] },
+      "2217": { nome: "CHAGAS", notas: [] },
+      "2218": { nome: "EMANUEL", notas: [] },
+      "2219": { nome: "EMMELLY", notas: [] },
+      "2220": { nome: "IZABELE DAMASIO", notas: [] },
+      "2221": { nome: "JONES", notas: [] },
+      "2222": { nome: "SALGADO", notas: [] },
+      "2223": { nome: "MARTELLO", notas: [] },
+      "2224": { nome: "PESSANHA", notas: [] },
+      "2225": { nome: "SANTOS", notas: [] },
+      "2226": { nome: "LEONARDO", notas: [] },
+      "2227": { nome: "QUINTELA", notas: [] },
+      "2228": { nome: "MARQUES", notas: [] },
+      "2229": { nome: "MARTINS", notas: [] },
+
+      "2301": { nome: "FLÁVIO", notas: [] },
+      "2302": { nome: "GIOVANNA", notas: [] },
+      "2303": { nome: "MAYLON", notas: [] },
+      "2304": { nome: "THAUAN", notas: [] },
+      "2305": { nome: "ALICE", notas: [] },
+      "2306": { nome: "SILAS", notas: [] },
+      "2307": { nome: "ANA RODRIGUES", notas: [] },
+      "2308": { nome: "PEREIRA", notas: [] },
+      "2309": { nome: "FELIPE", notas: [] },
+      "2310": { nome: "ALEXANDRIA", notas: [] },
+      "2311": { nome: "CASTRO", notas: [] },
+      "2312": { nome: "PAULA", notas: [] },
+      "2313": { nome: "ANA LUIZA", notas: [] },
+      "2314": { nome: "ROCHA", notas: [] },
+      "2315": { nome: "WALLACE", notas: [] },
+      "2316": { nome: "MARIA LUIZA", notas: [] },
+      "2317": { nome: "ADRIELLY", notas: [] },
+      "2318": { nome: "SARAH COSTA", notas: [] },
+      "2319": { nome: "MELO", notas: [] },
+      "2320": { nome: "SOUZA", notas: [] },
+      "2321": { nome: "DE JESUS", notas: [] },
+      "2322": { nome: "DOS ANJOS", notas: [] },
+      "2323": { nome: "MAICON", notas: [] },
+      "2324": { nome: "THOMÁS", notas: [] },
+      "2325": { nome: "NETO", notas: [] },
+      "2326": { nome: "LUIZ LIMA", notas: [] },
+      "2327": { nome: "EDUARDO", notas: [] },
+      "2328": { nome: "COUTINHO", notas: [] }
+    };
+
+    // Expondo helpers pro script principal
     window.__fb = {
-      salvar(dados) {
-        return set(dadosRef, dados);
-      },
-      escutar(callback) {
-        return onValue(dadosRef, (snapshot) => callback(snapshot.val()));
-      }
+      salvar(dados) { return set(dadosRef, dados); },
+      escutar(callback) { return onValue(dadosRef, (snap) => callback(snap.val())); },
+      seedIfEmpty() { return set(dadosRef, DEFAULT_DADOS); }
     };
   </script>
 
 <script>
   const SENHA_ADM = "E@mpeADM";
-
-  // ✅ Agora os dados vêm do Firebase (compartilhado)
-  let dados = {};              // estado atual do app
+  let dados = {};
   let adminLogado = false;
+  let seeded = false;
 
-  // Para atualizar UI quando mudar remotamente:
-  function syncUIDepoisDeAtualizarDados() {
-    // Atualiza “nome automático” no painel de observação
-    atualizarNomeAuto();
-
-    // Se estiver consultando alguém, re-renderiza
-    const nipConsultado = document.getElementById("nipInput").value.trim();
-    const studentBoxVisivel = document.getElementById("studentBox").style.display === "block";
-    if (nipConsultado && studentBoxVisivel && dados[nipConsultado]) {
-      renderNotasPublico(nipConsultado);
-    }
-
-    // Se painel de alunos estiver aberto, atualiza lista/detalhe
-    const alunosPanelAberto = document.getElementById("alunosPanel").style.display === "block";
-    if (alunosPanelAberto) {
-      listarAlunos(document.getElementById("buscaAluno").value.trim());
-      const detalheAberto = document.getElementById("detalheAluno").style.display === "block";
-      if (detalheAberto) {
-        // Tenta reabrir detalhe pelo valor atual do input editNipAluno (se existir)
-        const editNipEl = document.getElementById("editNipAluno");
-        if (editNipEl) {
-          const nip = editNipEl.value.trim();
-          if (nip && dados[nip]) abrirAlunoDetalhe(nip);
-        }
-      }
-    }
-  }
-
-  // ===== Firebase storage wrapper =====
-  function carregar() {
-    // não carrega síncrono; o listener em tempo real vai preencher `dados`
-    return {};
-  }
-  function salvar() {
-    if (!window.__fb) {
-      console.error("Firebase ainda não inicializou.");
-      return;
-    }
-    // salva o estado atual para todos
-    window.__fb.salvar(dados);
-  }
-
-  // ===== Utils =====
   function uid() {
     return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
   }
@@ -397,7 +529,34 @@
     el.style.display = text ? "block" : "none";
   }
 
-  // ===== Público: consultar N° de Bordo =====
+  function salvar() {
+    if (!window.__fb) return;
+    window.__fb.salvar(dados);
+  }
+
+  function syncUIDepoisDeAtualizarDados() {
+    atualizarNomeAuto();
+
+    const nipConsultado = document.getElementById("nipInput").value.trim();
+    const studentBoxVisivel = document.getElementById("studentBox").style.display === "block";
+    if (nipConsultado && studentBoxVisivel && dados[nipConsultado]) {
+      renderNotasPublico(nipConsultado);
+    }
+
+    const alunosPanelAberto = document.getElementById("alunosPanel").style.display === "block";
+    if (alunosPanelAberto) {
+      listarAlunos(document.getElementById("buscaAluno").value.trim());
+      const detalheAberto = document.getElementById("detalheAluno").style.display === "block";
+      if (detalheAberto) {
+        const editNipEl = document.getElementById("editNipAluno");
+        if (editNipEl) {
+          const nip = editNipEl.value.trim();
+          if (nip && dados[nip]) abrirAlunoDetalhe(nip);
+        }
+      }
+    }
+  }
+
   function buscarAnotacoes() {
     const nip = document.getElementById("nipInput").value.trim();
     document.getElementById("notesList").innerHTML = "";
@@ -443,7 +602,6 @@
     });
   }
 
-  // ===== ADM =====
   function toggleSenha() {
     const inp = document.getElementById("adminPassword");
     inp.type = inp.type === "password" ? "text" : "password";
@@ -503,7 +661,6 @@
     atualizarNomeAuto();
   }
 
-  // ===== Cadastro aluno =====
   function cadastrarAluno() {
     const nip = document.getElementById("cadNip").value.trim();
     const nome = document.getElementById("cadNome").value.trim();
@@ -523,7 +680,6 @@
     atualizarNomeAuto();
   }
 
-  // ===== Lista / Busca alunos =====
   function listarAlunos(filtro) {
     const lista = document.getElementById("listaAlunos");
     lista.innerHTML = "";
@@ -561,7 +717,6 @@
     listarAlunos("");
   }
 
-  // ===== Detalhe aluno: editar nome/n° de bordo e remover =====
   function abrirAlunoDetalhe(nip) {
     const aluno = dados[nip];
     if (!aluno) return;
@@ -673,7 +828,6 @@
     }
   }
 
-  // ===== Observações =====
   function atualizarNomeAuto() {
     const nip = document.getElementById("obsNip").value.trim();
     const box = document.getElementById("obsNomeAuto");
@@ -769,7 +923,6 @@
     setMsg("obsMsg", "", "");
   }
 
-  // Events
   document.getElementById("nipInput").addEventListener("keypress", e => {
     if (e.key === "Enter") buscarAnotacoes();
   });
@@ -778,13 +931,20 @@
   });
   document.getElementById("obsNip").addEventListener("input", atualizarNomeAuto);
 
-  // ✅ Inicia Firebase realtime: sempre que mudar, atualiza `dados` e a tela
+  // ✅ Realtime + seed automático se vazio
   (function iniciarRealtime() {
-    const aguardarFirebase = setInterval(() => {
+    const wait = setInterval(() => {
       if (!window.__fb) return;
-      clearInterval(aguardarFirebase);
+      clearInterval(wait);
 
       window.__fb.escutar((novo) => {
+        // Se estiver vazio no Firebase, cadastra a lista 1 vez
+        if ((novo === null || novo === undefined) && !seeded) {
+          seeded = true;
+          window.__fb.seedIfEmpty();
+          return;
+        }
+
         dados = novo || {};
         syncUIDepoisDeAtualizarDados();
       });
