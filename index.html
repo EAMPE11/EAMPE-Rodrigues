@@ -177,6 +177,13 @@
       font-weight: bold;
       width: 100%;
     }
+    .filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 10px 0 6px;
+    }
+    .filters > * { flex: 1; min-width: 220px; }
 
     @media (max-width: 640px) {
       .container { padding: 18px; }
@@ -227,7 +234,6 @@
         <div class="row">
           <button onclick="abrirAlunos()">Alunos</button>
           <button class="btn-secondary" onclick="abrirAddObs()">Adicionar observação</button>
-          <button class="btn-danger" onclick="resetarDados()">Resetar dados</button>
           <button class="btn-secondary" onclick="sairAdmin()">Sair</button>
         </div>
 
@@ -239,6 +245,24 @@
             <input id="buscaAluno" placeholder="🔎 Pesquisar por nome ou N° de Bordo" />
             <button onclick="filtrarAlunos()">Buscar</button>
             <button class="btn-secondary" onclick="limparBusca()">Limpar</button>
+          </div>
+
+          <!-- ✅ Filtros novos -->
+          <div class="filters">
+            <select id="filtroPelotao" onchange="aplicarFiltrosAlunos()">
+              <option value="">Pelotão: Todos</option>
+              <option value="11">Pelotão 11</option>
+              <option value="12">Pelotão 12</option>
+              <option value="13">Pelotão 13</option>
+              <option value="21">Pelotão 21</option>
+              <option value="22">Pelotão 22</option>
+              <option value="23">Pelotão 23</option>
+            </select>
+
+            <select id="ordemAlunos" onchange="aplicarFiltrosAlunos()">
+              <option value="alfabetica">Ordem: Alfabética (A→Z)</option>
+              <option value="numero">Ordem: N° de Bordo (crescente)</option>
+            </select>
           </div>
 
           <div class="card" style="background:#fff">
@@ -310,7 +334,7 @@
     const db = getDatabase(app);
     const dadosRef = ref(db, "dados");
 
-    // ✅ CARGA INICIAL: só entra se o banco estiver vazio
+    // ✅ CARGA INICIAL (seed) — só se estiver vazio (null)
     const DEFAULT_DADOS = {
       "1101": { nome: "GUSTAVO", notas: [] },
       "1102": { nome: "MISAEL", notas: [] },
@@ -491,7 +515,6 @@
       "2328": { nome: "COUTINHO", notas: [] }
     };
 
-    // Expondo helpers pro script principal
     window.__fb = {
       salvar(dados) { return set(dadosRef, dados); },
       escutar(callback) { return onValue(dadosRef, (snap) => callback(snap.val())); },
@@ -504,6 +527,10 @@
   let dados = {};
   let adminLogado = false;
   let seeded = false;
+
+  // filtros
+  let filtroPelotaoAtual = "";
+  let ordemAtual = "alfabetica";
 
   function uid() {
     return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
@@ -534,6 +561,21 @@
     window.__fb.salvar(dados);
   }
 
+  function getPelotaoFromBordo(nip) {
+    const s = String(nip || "").trim();
+    if (s.length < 2) return "";
+    return s.slice(0, 2); // 1101 -> "11"
+  }
+
+  function aplicarFiltrosAlunos() {
+    const pel = document.getElementById("filtroPelotao").value;
+    const ord = document.getElementById("ordemAlunos").value;
+    filtroPelotaoAtual = pel || "";
+    ordemAtual = ord || "alfabetica";
+
+    listarAlunos(document.getElementById("buscaAluno").value.trim());
+  }
+
   function syncUIDepoisDeAtualizarDados() {
     atualizarNomeAuto();
 
@@ -557,6 +599,7 @@
     }
   }
 
+  // ===== Público =====
   function buscarAnotacoes() {
     const nip = document.getElementById("nipInput").value.trim();
     document.getElementById("notesList").innerHTML = "";
@@ -602,6 +645,7 @@
     });
   }
 
+  // ===== ADM =====
   function toggleSenha() {
     const inp = document.getElementById("adminPassword");
     inp.type = inp.type === "password" ? "text" : "password";
@@ -649,6 +693,9 @@
     document.getElementById("addObsPanel").style.display = "none";
     document.getElementById("detalheAluno").style.display = "none";
     setMsg("cadMsg", "", "");
+    // garante que selects estejam sincronizados
+    document.getElementById("filtroPelotao").value = filtroPelotaoAtual;
+    document.getElementById("ordemAlunos").value = ordemAtual;
     listarAlunos();
   }
 
@@ -661,6 +708,7 @@
     atualizarNomeAuto();
   }
 
+  // ===== Cadastro aluno =====
   function cadastrarAluno() {
     const nip = document.getElementById("cadNip").value.trim();
     const nome = document.getElementById("cadNome").value.trim();
@@ -680,31 +728,48 @@
     atualizarNomeAuto();
   }
 
-  function listarAlunos(filtro) {
+  // ===== Lista / Busca alunos =====
+  function listarAlunos(filtroTexto) {
     const lista = document.getElementById("listaAlunos");
     lista.innerHTML = "";
 
-    const entries = Object.entries(dados || {});
-    const f = (filtro || "").toLowerCase();
+    let entries = Object.entries(dados || {});
+    const f = (filtroTexto || "").toLowerCase();
+
+    // filtro pelotão
+    if (filtroPelotaoAtual) {
+      entries = entries.filter(([nip]) => getPelotaoFromBordo(nip) === filtroPelotaoAtual);
+    }
+
+    // filtro texto (nome ou nip)
+    if (f) {
+      entries = entries.filter(([nip, aluno]) => {
+        const nomeLower = (aluno.nome || "").toLowerCase();
+        return nomeLower.includes(f) || String(nip).includes(f);
+      });
+    }
+
+    // ordenação
+    if (ordemAtual === "numero") {
+      entries.sort((a, b) => Number(a[0]) - Number(b[0]));
+    } else {
+      entries.sort((a, b) => (a[1].nome || "").localeCompare(b[1].nome || ""));
+    }
 
     if (entries.length === 0) {
-      lista.innerHTML = `<div class="note-card">Nenhum aluno cadastrado ainda.</div>`;
+      lista.innerHTML = `<div class="note-card">Nenhum aluno encontrado com esses filtros.</div>`;
       return;
     }
 
-    entries
-      .sort((a,b) => (a[1].nome || "").localeCompare(b[1].nome || ""))
-      .forEach(([nip, aluno]) => {
-        const nomeLower = (aluno.nome || "").toLowerCase();
-        if (f && !nomeLower.includes(f) && !nip.includes(f)) return;
-
-        lista.innerHTML += `
-          <div class="student-item" onclick="abrirAlunoDetalhe('${escapeAttr(nip)}')">
-            <b>${escapeHtml(aluno.nome || ("Aluno " + nip))}</b><br/>
-            <span class="muted">N° de Bordo: ${escapeHtml(nip)} • Obs: ${(aluno.notas || []).length}</span>
-          </div>
-        `;
-      });
+    entries.forEach(([nip, aluno]) => {
+      const pel = getPelotaoFromBordo(nip) || "--";
+      lista.innerHTML += `
+        <div class="student-item" onclick="abrirAlunoDetalhe('${escapeAttr(nip)}')">
+          <b>${escapeHtml(aluno.nome || ("Aluno " + nip))}</b><br/>
+          <span class="muted">Pelotão: ${escapeHtml(pel)} • N° de Bordo: ${escapeHtml(nip)} • Obs: ${(aluno.notas || []).length}</span>
+        </div>
+      `;
+    });
   }
 
   function filtrarAlunos() {
@@ -717,6 +782,7 @@
     listarAlunos("");
   }
 
+  // ===== Detalhe aluno =====
   function abrirAlunoDetalhe(nip) {
     const aluno = dados[nip];
     if (!aluno) return;
@@ -828,6 +894,7 @@
     }
   }
 
+  // ===== Observações =====
   function atualizarNomeAuto() {
     const nip = document.getElementById("obsNip").value.trim();
     const box = document.getElementById("obsNomeAuto");
@@ -899,30 +966,7 @@
     listarAlunos(document.getElementById("buscaAluno").value.trim());
   }
 
-  function resetarDados() {
-    if (!confirm("Apagar tudo e voltar ao zero (sem alunos)?")) return;
-    dados = {};
-    salvar();
-
-    document.getElementById("nipInput").value = "";
-    document.getElementById("notesList").innerHTML = "";
-    document.getElementById("studentBox").style.display = "none";
-    setMsg("msg", "", "");
-
-    document.getElementById("listaAlunos").innerHTML = "";
-    document.getElementById("detalheAluno").style.display = "none";
-
-    document.getElementById("cadNip").value = "";
-    document.getElementById("cadNome").value = "";
-    document.getElementById("obsNip").value = "";
-    document.getElementById("obsTexto").value = "";
-    atualizarNomeAuto();
-
-    setMsg("adminMsg", "Dados resetados (zero alunos).", "success");
-    setMsg("cadMsg", "", "");
-    setMsg("obsMsg", "", "");
-  }
-
+  // Events
   document.getElementById("nipInput").addEventListener("keypress", e => {
     if (e.key === "Enter") buscarAnotacoes();
   });
@@ -938,13 +982,12 @@
       clearInterval(wait);
 
       window.__fb.escutar((novo) => {
-        // Se estiver vazio no Firebase, cadastra a lista 1 vez
+        // seed só quando for null/undefined
         if ((novo === null || novo === undefined) && !seeded) {
           seeded = true;
           window.__fb.seedIfEmpty();
           return;
         }
-
         dados = novo || {};
         syncUIDepoisDeAtualizarDados();
       });
