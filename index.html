@@ -290,12 +290,87 @@
     </div>
   </div>
 
+  <!-- ✅ Firebase (Realtime Database) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCH9AuvD9AoOp3QJV-ctpylnGJdhISpwKo",
+      authDomain: "eampe-f7602.firebaseapp.com",
+      databaseURL: "https://eampe-f7602-default-rtdb.firebaseio.com",
+      projectId: "eampe-f7602",
+      storageBucket: "eampe-f7602.firebasestorage.app",
+      messagingSenderId: "1068739820515",
+      appId: "1:1068739820515:web:2b2da1618a62754dae7ed6",
+      measurementId: "G-W0G2NZ78LN"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Tudo do sistema fica aqui:
+    const dadosRef = ref(db, "dados");
+
+    // expõe helpers pro script normal (não-module)
+    window.__fb = {
+      salvar(dados) {
+        return set(dadosRef, dados);
+      },
+      escutar(callback) {
+        return onValue(dadosRef, (snapshot) => callback(snapshot.val()));
+      }
+    };
+  </script>
+
 <script>
   const SENHA_ADM = "E@mpeADM";
-  const STORAGE_KEY = "eampe_data_v5";
 
-  let dados = carregar();
+  // ✅ Agora os dados vêm do Firebase (compartilhado)
+  let dados = {};              // estado atual do app
   let adminLogado = false;
+
+  // Para atualizar UI quando mudar remotamente:
+  function syncUIDepoisDeAtualizarDados() {
+    // Atualiza “nome automático” no painel de observação
+    atualizarNomeAuto();
+
+    // Se estiver consultando alguém, re-renderiza
+    const nipConsultado = document.getElementById("nipInput").value.trim();
+    const studentBoxVisivel = document.getElementById("studentBox").style.display === "block";
+    if (nipConsultado && studentBoxVisivel && dados[nipConsultado]) {
+      renderNotasPublico(nipConsultado);
+    }
+
+    // Se painel de alunos estiver aberto, atualiza lista/detalhe
+    const alunosPanelAberto = document.getElementById("alunosPanel").style.display === "block";
+    if (alunosPanelAberto) {
+      listarAlunos(document.getElementById("buscaAluno").value.trim());
+      const detalheAberto = document.getElementById("detalheAluno").style.display === "block";
+      if (detalheAberto) {
+        // Tenta reabrir detalhe pelo valor atual do input editNipAluno (se existir)
+        const editNipEl = document.getElementById("editNipAluno");
+        if (editNipEl) {
+          const nip = editNipEl.value.trim();
+          if (nip && dados[nip]) abrirAlunoDetalhe(nip);
+        }
+      }
+    }
+  }
+
+  // ===== Firebase storage wrapper =====
+  function carregar() {
+    // não carrega síncrono; o listener em tempo real vai preencher `dados`
+    return {};
+  }
+  function salvar() {
+    if (!window.__fb) {
+      console.error("Firebase ainda não inicializou.");
+      return;
+    }
+    // salva o estado atual para todos
+    window.__fb.salvar(dados);
+  }
 
   // ===== Utils =====
   function uid() {
@@ -321,23 +396,6 @@
     el.textContent = text || "";
     el.style.display = text ? "block" : "none";
   }
-
-  // ===== Storage =====
-  function carregar() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      const vazio = {}; // sem alunos cadastrados
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(vazio));
-      return vazio;
-    }
-    try { return JSON.parse(raw) || {}; }
-    catch {
-      const vazio = {};
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(vazio));
-      return vazio;
-    }
-  }
-  function salvar() { localStorage.setItem(STORAGE_KEY, JSON.stringify(dados)); }
 
   // ===== Público: consultar N° de Bordo =====
   function buscarAnotacoes() {
@@ -365,7 +423,7 @@
     const wrap = document.getElementById("notesList");
     wrap.innerHTML = "";
 
-    const notas = aluno.notas || [];
+    const notas = (aluno && aluno.notas) ? aluno.notas : [];
     if (notas.length === 0) {
       wrap.innerHTML = `<div class="note-card">Nenhuma anotação encontrada para este N° de Bordo.</div>`;
       return;
@@ -470,7 +528,7 @@
     const lista = document.getElementById("listaAlunos");
     lista.innerHTML = "";
 
-    const entries = Object.entries(dados);
+    const entries = Object.entries(dados || {});
     const f = (filtro || "").toLowerCase();
 
     if (entries.length === 0) {
@@ -619,6 +677,7 @@
   function atualizarNomeAuto() {
     const nip = document.getElementById("obsNip").value.trim();
     const box = document.getElementById("obsNomeAuto");
+    if (!box) return;
     if (!nip) { box.textContent = "Nome: (digite um N° de Bordo cadastrado)"; return; }
     if (!dados[nip]) { box.textContent = "Nome: (N° de Bordo não cadastrado)"; return; }
     box.textContent = "Nome: " + dados[nip].nome;
@@ -688,9 +747,8 @@
 
   function resetarDados() {
     if (!confirm("Apagar tudo e voltar ao zero (sem alunos)?")) return;
-    const vazio = {};
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(vazio));
-    dados = vazio;
+    dados = {};
+    salvar();
 
     document.getElementById("nipInput").value = "";
     document.getElementById("notesList").innerHTML = "";
@@ -719,6 +777,19 @@
     if (e.key === "Enter") entrarAdmin();
   });
   document.getElementById("obsNip").addEventListener("input", atualizarNomeAuto);
+
+  // ✅ Inicia Firebase realtime: sempre que mudar, atualiza `dados` e a tela
+  (function iniciarRealtime() {
+    const aguardarFirebase = setInterval(() => {
+      if (!window.__fb) return;
+      clearInterval(aguardarFirebase);
+
+      window.__fb.escutar((novo) => {
+        dados = novo || {};
+        syncUIDepoisDeAtualizarDados();
+      });
+    }, 50);
+  })();
 </script>
 
 </body>
