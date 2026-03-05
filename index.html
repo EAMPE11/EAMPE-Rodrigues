@@ -68,6 +68,9 @@
     .btn-danger { background: #b02a37; }
     .btn-danger:hover { background: #8f1f2a; }
 
+    .btn-warn { background: #b45309; }
+    .btn-warn:hover { background: #92400e; }
+
     .message {
       display: none;
       margin: 10px 0 14px;
@@ -77,6 +80,7 @@
     }
     .message.success { background: #e7f4ea; color: #166534; display: block; }
     .message.error { background: #ffe5e5; color: #b00020; display: block; }
+    .message.info { background: #e8f1ff; color: #0b2c5f; display: block; }
 
     .divider { height: 1px; background: #dbe4f0; margin: 22px 0; }
 
@@ -113,11 +117,11 @@
       color: #fff;
       font-size: 12px;
       font-weight: bold;
-      text-transform: capitalize;
+      text-transform: none;
     }
-    .positive { background: #198754; }
-    .negative { background: #dc3545; }
-
+    .pos { background: #198754; }           /* Bravo Zulu */
+    .neg { background: #dc3545; }           /* Livro Bravo */
+    .veryneg { background: #111827; }       /* Parte de Ocorrência */
     .stamp { font-size: 12px; color: #6b7280; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
@@ -177,6 +181,7 @@
       font-weight: bold;
       width: 100%;
     }
+
     .filters {
       display: flex;
       gap: 10px;
@@ -184,6 +189,26 @@
       margin: 10px 0 6px;
     }
     .filters > * { flex: 1; min-width: 220px; }
+
+    /* Monitors list */
+    .mon-item {
+      padding: 10px 12px;
+      border: 1px solid #dde4ee;
+      border-radius: 10px;
+      background: #fff;
+      margin-bottom: 8px;
+    }
+    .pill {
+      display:inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #fff;
+      margin-left: 6px;
+    }
+    .pill-ok { background:#198754; }
+    .pill-off { background:#6b7280; }
 
     @media (max-width: 640px) {
       .container { padding: 18px; }
@@ -209,27 +234,24 @@
 
     <div class="divider"></div>
 
-    <!-- ADM -->
+    <!-- ADM / MONITOR -->
     <div class="card">
-      <div class="inline-title">Área do ADM</div>
+      <div class="inline-title">Área Restrita (ADM / Monitores)</div>
 
-      <!-- Login (Email+Senha) -->
       <div class="row tight">
-        <input id="adminEmail" type="email" placeholder="Email (ADM ou Monitor)" autocomplete="username" />
+        <input id="loginNome" placeholder="Login (ex: monitor.ferreira)" />
         <div class="pw-wrap">
-          <input id="adminPassword" type="password" placeholder="Senha" autocomplete="current-password" />
-          <div class="eye-btn" onclick="toggleSenha()" title="Mostrar/ocultar senha">👁</div>
+          <input id="loginSenha" type="password" placeholder="Senha" />
+          <div class="eye-btn" onclick="toggleSenhaLogin()" title="Mostrar/ocultar senha">👁</div>
         </div>
-        <button onclick="entrarAdmin()">Entrar</button>
+        <button onclick="entrarSistema()">Entrar</button>
       </div>
 
-      <div id="adminMsg" class="message"></div>
+      <div id="authMsg" class="message"></div>
 
       <!-- Barra com engrenagem -->
       <div id="gearBar" class="gear-bar">
-        <div style="font-weight:bold;color:#0b2c5f;">
-          Logado: <span id="whoami">---</span>
-        </div>
+        <div style="font-weight:bold;color:#0b2c5f;" id="whoami">Logado</div>
         <div class="gear-btn" onclick="toggleGearMenu()" title="Menu">⚙️</div>
       </div>
 
@@ -238,30 +260,11 @@
         <div class="row">
           <button onclick="abrirAlunos()">Alunos</button>
           <button class="btn-secondary" onclick="abrirAddObs()">Adicionar observação</button>
-          <button class="btn-secondary" onclick="abrirCriarConta()">Criar conta de Monitor</button>
-          <button class="btn-secondary" onclick="sairAdmin()">Sair</button>
+          <button class="btn-secondary" onclick="sairSistema()">Sair</button>
         </div>
 
-        <!-- Painel CRIAR CONTA -->
-        <div id="criarContaPanel" style="display:none;">
-          <div class="inline-title">Criar conta de Monitor</div>
-          <div class="muted" style="margin-bottom:10px;">
-            * Apenas o ADM pode criar contas. Use “login” curto (ex: monitor.ferreira).
-          </div>
-
-          <div class="row">
-            <input id="novoLogin" placeholder="Login do monitor (ex: monitor.ferreira)" />
-            <input id="novaSenha" type="password" placeholder="Senha do monitor" />
-          </div>
-          <div class="row">
-            <button onclick="criarContaMonitor()">Criar conta</button>
-          </div>
-
-          <div id="criarContaMsg" class="message"></div>
-
-          <div class="muted">
-            Obs: o sistema cria um email interno no formato <b>login@eampe.local</b>.
-          </div>
+        <div class="row" id="adminOnlyButtons" style="display:none;">
+          <button class="btn-warn" onclick="abrirMonitores()">Monitores</button>
         </div>
 
         <!-- Painel ALUNOS -->
@@ -274,7 +277,6 @@
             <button class="btn-secondary" onclick="limparBusca()">Limpar</button>
           </div>
 
-          <!-- Filtros -->
           <div class="filters">
             <select id="filtroPelotao" onchange="aplicarFiltrosAlunos()">
               <option value="">Pelotão: Todos</option>
@@ -321,8 +323,9 @@
 
           <div class="row">
             <select id="obsTipo">
-              <option value="positiva">Positiva</option>
-              <option value="negativa">Negativa</option>
+              <option value="bravo_zulu">Bravo Zulu (positiva)</option>
+              <option value="livro_bravo">Livro Bravo (negativa)</option>
+              <option value="parte_ocorrencia">Parte de Ocorrência (muito negativa)</option>
             </select>
           </div>
 
@@ -337,20 +340,43 @@
           <div id="obsMsg" class="message"></div>
           <div class="muted">* Para adicionar observação, o aluno precisa estar cadastrado.</div>
         </div>
+
+        <!-- Painel MONITORES (ADM) -->
+        <div id="monitoresPanel" style="display:none;">
+          <div class="inline-title">Monitores (somente ADM)</div>
+
+          <div class="card" style="background:#fff">
+            <div class="inline-title">Criar conta de Monitor</div>
+            <div class="row">
+              <input id="novoLogin" placeholder="Login (ex: monitor.ferreira)" />
+              <input id="novaSenha" type="password" placeholder="Senha (mín. 6)" />
+            </div>
+            <div class="row">
+              <button onclick="criarContaMonitor()">Criar</button>
+            </div>
+            <div id="criarContaMsg" class="message"></div>
+            <div class="muted">
+              * Observação: este painel lista/gerencia monitores no Banco (Realtime DB).<br/>
+              * Excluir usuário do <b>Authentication</b> pelo site (frontend) não é suportado sem Cloud Function.
+            </div>
+          </div>
+
+          <div class="card" style="background:#fff">
+            <div class="inline-title">Lista de Monitores</div>
+            <div id="monitoresMsg" class="message"></div>
+            <div id="listaMonitores"></div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 
+  <!-- Firebase (App + RTDB + Auth) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      signOut,
-      onAuthStateChanged,
-      createUserWithEmailAndPassword
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, set, onValue, get, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCH9AuvD9AoOp3QJV-ctpylnGJdhISpwKo",
@@ -363,67 +389,250 @@
       measurementId: "G-W0G2NZ78LN"
     };
 
+    // App principal (sessão normal)
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
+
+    // App secundário (para criar monitor sem derrubar sessão do ADM)
+    const secondaryApp = initializeApp(firebaseConfig, "secondary");
+    const secondaryAuth = getAuth(secondaryApp);
+
     const dadosRef = ref(db, "dados");
+    const monitoresRef = ref(db, "monitores"); // /monitores/{uid}
 
-    // ✅ Emails de ADM permitidos a criar conta (edite aqui)
-    const ADM_ALLOWLIST = new Set([
-      "admin@eampe.com" // <-- TROQUE para o seu email ADM real do Firebase
-    ]);
+    // ✅ CARGA INICIAL (seed) — só se estiver vazio (null)
+    const DEFAULT_DADOS = {
+      "1101": { nome: "GUSTAVO", notas: [] },
+      "1102": { nome: "MISAEL", notas: [] },
+      "1103": { nome: "BRUNA", notas: [] },
+      "1104": { nome: "BRAYAN", notas: [] },
+      "1105": { nome: "LAURA", notas: [] },
+      "1106": { nome: "FERREIRA", notas: [] },
+      "1107": { nome: "EVENLY MORAIS", notas: [] },
+      "1108": { nome: "LIRA", notas: [] },
+      "1109": { nome: "MARCELLY", notas: [] },
+      "1110": { nome: "ANA CAROLINA", notas: [] },
+      "1111": { nome: "MOREIRA", notas: [] },
+      "1112": { nome: "JÚLIA SILVA", notas: [] },
+      "1113": { nome: "DA MATA", notas: [] },
+      "1114": { nome: "LAVÍNIA", notas: [] },
+      "1115": { nome: "JULLIA CALDAS", notas: [] },
+      "1116": { nome: "PIERRE", notas: [] },
+      "1117": { nome: "LINDEMBERG", notas: [] },
+      "1118": { nome: "SOARES", notas: [] },
+      "1119": { nome: "LINCOLN", notas: [] },
+      "1120": { nome: "DE PAULA", notas: [] },
+      "1121": { nome: "MAYSA", notas: [] },
+      "1122": { nome: "EVERSON", notas: [] },
+      "1123": { nome: "WALLISON", notas: [] },
+      "1124": { nome: "SALVADOR", notas: [] },
+      "1125": { nome: "RODRIGUES", notas: [] },
+      "1126": { nome: "MOURA", notas: [] },
+      "1127": { nome: "DAVI", notas: [] },
+      "1128": { nome: "JULLYANO", notas: [] },
 
-    // ✅ alunos seed (mesmo que você tinha)
-    const DEFAULT_DADOS = {/* (mantive o mesmo dicionário do seu código anterior) */};
+      "1201": { nome: "AZEVEDO", notas: [] },
+      "1202": { nome: "EDUARDA PIMENTEL", notas: [] },
+      "1203": { nome: "CAMARA", notas: [] },
+      "1204": { nome: "JEREMIAS", notas: [] },
+      "1205": { nome: "CAMILLY", notas: [] },
+      "1206": { nome: "LOPES", notas: [] },
+      "1207": { nome: "ÁTILA", notas: [] },
+      "1208": { nome: "JHONATAN", notas: [] },
+      "1209": { nome: "MARAN", notas: [] },
+      "1210": { nome: "MARCOS PAULO", notas: [] },
+      "1211": { nome: "HENRIQUE", notas: [] },
+      "1212": { nome: "ANA CLARA", notas: [] },
+      "1213": { nome: "RAFAEL", notas: [] },
+      "1214": { nome: "LOPES SANTOS", notas: [] },
+      "1215": { nome: "JÚLIA FLORO", notas: [] },
+      "1216": { nome: "NATHAN", notas: [] },
+      "1217": { nome: "VINÍCIUS", notas: [] },
+      "1218": { nome: "KAUÊ", notas: [] },
+      "1219": { nome: "OLIVEIRA", notas: [] },
+      "1220": { nome: "ALICY LADEIRA", notas: [] },
+      "1221": { nome: "BRUNA DUARTE", notas: [] },
+      "1222": { nome: "PEDRO SILVA", notas: [] },
+      "1223": { nome: "ARTHUR", notas: [] },
+      "1224": { nome: "ISABELLA CARDOSO", notas: [] },
+      "1225": { nome: "THALITA PAIVA", notas: [] },
+      "1226": { nome: "CRUZ", notas: [] },
+      "1227": { nome: "MACIEL", notas: [] },
+      "1228": { nome: "HUMBERTO", notas: [] },
+      "1229": { nome: "ARAUJO", notas: [] },
 
-    // Ponte Firebase
+      "1301": { nome: "BATISTA", notas: [] },
+      "1302": { nome: "VITÓRIA CAMPOS", notas: [] },
+      "1303": { nome: "ANGELO", notas: [] },
+      "1304": { nome: "HUGO", notas: [] },
+      "1305": { nome: "ANA", notas: [] },
+      "1306": { nome: "PRAZERES", notas: [] },
+      "1307": { nome: "ALANIS", notas: [] },
+      "1308": { nome: "NATHÁLIA", notas: [] },
+      "1309": { nome: "JOÃO", notas: [] },
+      "1310": { nome: "LETICIA", notas: [] },
+      "1311": { nome: "PAIXÃO", notas: [] },
+      "1312": { nome: "SILVA", notas: [] },
+      "1313": { nome: "NICKOLAS", notas: [] },
+      "1314": { nome: "DANIEL", notas: [] },
+      "1315": { nome: "EVANDRO", notas: [] },
+      "1316": { nome: "CLARA", notas: [] },
+      "1317": { nome: "LUÍS", notas: [] },
+      "1318": { nome: "ANDRESSA", notas: [] },
+      "1319": { nome: "CAROLINE", notas: [] },
+      "1320": { nome: "RIBEIRO", notas: [] },
+      "1321": { nome: "ESTEVÃO", notas: [] },
+      "1322": { nome: "NOUZINHO", notas: [] },
+      "1323": { nome: "MARCELO", notas: [] },
+      "1324": { nome: "KAIQUE", notas: [] },
+      "1325": { nome: "OTÁVIO", notas: [] },
+      "1326": { nome: "CAIO", notas: [] },
+      "1327": { nome: "MERCÊS", notas: [] },
+      "1328": { nome: "NASCIMENTO", notas: [] },
+      "1329": { nome: "CAIO MURILO", notas: [] },
+
+      "2101": { nome: "ANA SOUZA", notas: [] },
+      "2102": { nome: "LUÍSA", notas: [] },
+      "2103": { nome: "CESAR", notas: [] },
+      "2104": { nome: "RESSURREIÇÃO", notas: [] },
+      "2105": { nome: "MAURÍCIO", notas: [] },
+      "2106": { nome: "DAIANE", notas: [] },
+      "2107": { nome: "BRUNO MOTA", notas: [] },
+      "2108": { nome: "J. SILVA", notas: [] },
+      "2109": { nome: "LUCIA", notas: [] },
+      "2110": { nome: "RAYANNE", notas: [] },
+      "2111": { nome: "QUEZIA", notas: [] },
+      "2112": { nome: "MARINHO", notas: [] },
+      "2113": { nome: "IGOR", notas: [] },
+      "2114": { nome: "FRANÇA", notas: [] },
+      "2115": { nome: "FERRAZ", notas: [] },
+      "2116": { nome: "CAROLINA", notas: [] },
+      "2117": { nome: "LORENA", notas: [] },
+      "2118": { nome: "CAUÃ", notas: [] },
+      "2119": { nome: "RAMOS", notas: [] },
+      "2120": { nome: "PABLO", notas: [] },
+      "2121": { nome: "VIANA", notas: [] },
+      "2122": { nome: "ELIEL", notas: [] },
+      "2123": { nome: "JEAN", notas: [] },
+      "2124": { nome: "TAVEIRA", notas: [] },
+      "2125": { nome: "VITOR SILVA", notas: [] },
+      "2126": { nome: "RUAN PABLO", notas: [] },
+      "2127": { nome: "CERQUEIRA", notas: [] },
+      "2128": { nome: "ANDREY MACIEL", notas: [] },
+      "2129": { nome: "G. SOUZA", notas: [] },
+
+      "2201": { nome: "STELLA", notas: [] },
+      "2202": { nome: "STEPHANE", notas: [] },
+      "2203": { nome: "CORDEIRO", notas: [] },
+      "2204": { nome: "LÔA MORAES", notas: [] },
+      "2205": { nome: "TAVARES", notas: [] },
+      "2206": { nome: "WILLYAN", notas: [] },
+      "2207": { nome: "ÁGATA", notas: [] },
+      "2208": { nome: "MARIA", notas: [] },
+      "2209": { nome: "GUILHERME", notas: [] },
+      "2210": { nome: "MARIA EDUARDA", notas: [] },
+      "2211": { nome: "REGINA", notas: [] },
+      "2212": { nome: "THALITA", notas: [] },
+      "2213": { nome: "COSTA", notas: [] },
+      "2214": { nome: "ALVES", notas: [] },
+      "2215": { nome: "DUARTE", notas: [] },
+      "2216": { nome: "CARVALHO", notas: [] },
+      "2217": { nome: "CHAGAS", notas: [] },
+      "2218": { nome: "EMANUEL", notas: [] },
+      "2219": { nome: "EMMELLY", notas: [] },
+      "2220": { nome: "IZABELE DAMASIO", notas: [] },
+      "2221": { nome: "JONES", notas: [] },
+      "2222": { nome: "SALGADO", notas: [] },
+      "2223": { nome: "MARTELLO", notas: [] },
+      "2224": { nome: "PESSANHA", notas: [] },
+      "2225": { nome: "SANTOS", notas: [] },
+      "2226": { nome: "LEONARDO", notas: [] },
+      "2227": { nome: "QUINTELA", notas: [] },
+      "2228": { nome: "MARQUES", notas: [] },
+      "2229": { nome: "MARTINS", notas: [] },
+
+      "2301": { nome: "FLÁVIO", notas: [] },
+      "2302": { nome: "GIOVANNA", notas: [] },
+      "2303": { nome: "MAYLON", notas: [] },
+      "2304": { nome: "THAUAN", notas: [] },
+      "2305": { nome: "ALICE", notas: [] },
+      "2306": { nome: "SILAS", notas: [] },
+      "2307": { nome: "ANA RODRIGUES", notas: [] },
+      "2308": { nome: "PEREIRA", notas: [] },
+      "2309": { nome: "FELIPE", notas: [] },
+      "2310": { nome: "ALEXANDRIA", notas: [] },
+      "2311": { nome: "CASTRO", notas: [] },
+      "2312": { nome: "PAULA", notas: [] },
+      "2313": { nome: "ANA LUIZA", notas: [] },
+      "2314": { nome: "ROCHA", notas: [] },
+      "2315": { nome: "WALLACE", notas: [] },
+      "2316": { nome: "MARIA LUIZA", notas: [] },
+      "2317": { nome: "ADRIELLY", notas: [] },
+      "2318": { nome: "SARAH COSTA", notas: [] },
+      "2319": { nome: "MELO", notas: [] },
+      "2320": { nome: "SOUZA", notas: [] },
+      "2321": { nome: "DE JESUS", notas: [] },
+      "2322": { nome: "DOS ANJOS", notas: [] },
+      "2323": { nome: "MAICON", notas: [] },
+      "2324": { nome: "THOMÁS", notas: [] },
+      "2325": { nome: "NETO", notas: [] },
+      "2326": { nome: "LUIZ LIMA", notas: [] },
+      "2327": { nome: "EDUARDO", notas: [] },
+      "2328": { nome: "COUTINHO", notas: [] }
+    };
+
+    // expõe "API" pro script normal
     window.__fb = {
-      escutar(callback) { return onValue(dadosRef, (snap) => callback(snap.val())); },
-      salvar(dados) { return set(dadosRef, dados); },
-      seedIfEmpty() { return set(dadosRef, DEFAULT_DADOS); },
-
-      login(email, senha) { return signInWithEmailAndPassword(auth, email, senha); },
-      logout() { return signOut(auth); },
-      onAuth(callback) { return onAuthStateChanged(auth, callback); },
-
-      criarUsuario(email, senha) { return createUserWithEmailAndPassword(auth, email, senha); },
-      isAdm(email) { return ADM_ALLOWLIST.has(String(email || "").toLowerCase()); }
+      db,
+      auth,
+      secondaryAuth,
+      // dados
+      salvarDados: (dados) => set(dadosRef, dados),
+      escutarDados: (cb) => onValue(dadosRef, (snap) => cb(snap.val())),
+      seedDados: () => set(dadosRef, DEFAULT_DADOS),
+      // monitores
+      escutarMonitores: (cb) => onValue(monitoresRef, (snap) => cb(snap.val() || {})),
+      getPerfil: async (uid) => {
+        const s = await get(ref(db, `monitores/${uid}`));
+        return s.val();
+      },
+      setPerfil: (uid, payload) => set(ref(db, `monitores/${uid}`), payload),
+      updatePerfil: (uid, payload) => update(ref(db, `monitores/${uid}`), payload),
+      removerPerfil: (uid) => remove(ref(db, `monitores/${uid}`)),
+      // auth
+      login: (email, senha) => signInWithEmailAndPassword(auth, email, senha),
+      logout: () => signOut(auth),
+      criarUsuarioSecondary: (email, senha) => createUserWithEmailAndPassword(secondaryAuth, email, senha),
+      onAuth: (cb) => onAuthStateChanged(auth, cb),
     };
   </script>
 
+  <!-- App Script -->
   <script>
-    // ======= IMPORTANTE =======
-    // Para não deixar esta resposta gigantesca demais, o DEFAULT_DADOS acima está abreviado.
-    // Você deve colar nele o mesmo objeto DEFAULT_DADOS completo que você já tem (todos os alunos).
-    // O resto do código abaixo já funciona.
+    // ✅ EMAIL REAL DO ADM (confirmado pela sua imagem)
+    const ADM_ALLOWLIST = new Set([
+      "admin@eampe.com"
+    ]);
 
     let dados = {};
-    let adminLogado = false;
-    let seeded = false;
-    let usuarioAtualEmail = "";
+    let adminLogado = false;     // na prática: "logado e liberado"
     let isAdm = false;
 
+    // filtros
     let filtroPelotaoAtual = "";
     let ordemAtual = "alfabetica";
 
-    function normalizarLogin(u) {
-      return (u || "")
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, ".")
-        .replace(/[^a-z0-9._-]/g, "");
-    }
-    function loginParaEmailFake(login) {
-      const u = normalizarLogin(login);
-      return `${u}@eampe.local`;
-    }
-    function emailFakeParaLogin(email) {
-      const e = String(email || "").toLowerCase();
-      return e.endsWith("@eampe.local") ? e.replace("@eampe.local", "") : e;
-    }
+    // cache de monitores (para UI)
+    let monitoresCache = {};
 
-    function uid() { return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16); }
-    function agora() { return new Date().toLocaleString(); }
+    // ===== Utils =====
+    function uid() {
+      return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
+    }
+    function agora() {
+      return new Date().toLocaleString();
+    }
     function escapeHtml(str) {
       return String(str ?? "")
         .replaceAll("&", "&amp;")
@@ -432,26 +641,29 @@
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
     }
-    function escapeAttr(str) { return escapeHtml(str).replaceAll("`", "&#096;"); }
+    function escapeAttr(str) {
+      return escapeHtml(str).replaceAll("`", "&#096;");
+    }
     function setMsg(elId, text, type) {
       const el = document.getElementById(elId);
+      if (!el) return;
       el.className = "message " + (type || "");
       el.textContent = text || "";
       el.style.display = text ? "block" : "none";
     }
 
-    function salvarComTratamento(msgElId) {
-      if (!window.__fb) return Promise.resolve();
-      return window.__fb.salvar(dados).catch((err) => {
-        console.error("Erro ao salvar:", err);
-        const code = (err && err.code) ? String(err.code) : "";
-        if (code.includes("PERMISSION_DENIED")) {
-          setMsg(msgElId || "adminMsg", "Sem permissão para salvar. Faça login.", "error");
-        } else {
-          setMsg(msgElId || "adminMsg", "Falha ao salvar. Verifique conexão/regras.", "error");
-        }
-        throw err;
-      });
+    function normalizarLogin(login) {
+      return String(login || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ".")
+        .replace(/[^a-z0-9._-]/g, "");
+    }
+
+    // “email fake” só pra usar Auth email/senha por baixo
+    function loginParaEmailFake(login) {
+      const l = normalizarLogin(login);
+      return `${l}@monitores.eampe.local`;
     }
 
     function getPelotaoFromBordo(nip) {
@@ -460,20 +672,52 @@
       return s.slice(0, 2);
     }
 
-    function aplicarFiltrosAlunos() {
-      filtroPelotaoAtual = document.getElementById("filtroPelotao").value || "";
-      ordemAtual = document.getElementById("ordemAlunos").value || "alfabetica";
-      listarAlunos(document.getElementById("buscaAluno").value.trim());
+    function tipoLabel(tipo) {
+      switch (tipo) {
+        case "bravo_zulu": return "Bravo Zulu";
+        case "livro_bravo": return "Livro Bravo";
+        case "parte_ocorrencia": return "Parte de Ocorrência";
+        // migração (caso tenha dados antigos)
+        case "positiva": return "Bravo Zulu";
+        case "negativa": return "Livro Bravo";
+        default: return String(tipo || "");
+      }
     }
 
+    function tipoClasse(tipo) {
+      if (tipo === "bravo_zulu" || tipo === "positiva") return "pos";
+      if (tipo === "livro_bravo" || tipo === "negativa") return "neg";
+      if (tipo === "parte_ocorrencia") return "veryneg";
+      return "neg";
+    }
+
+    // ===== Firebase write =====
+    function salvar() {
+      if (!window.__fb) return;
+      return window.__fb.salvarDados(dados);
+    }
+
+    // ===== UI sync =====
     function syncUIDepoisDeAtualizarDados() {
       atualizarNomeAuto();
-      const nipConsultado = document.getElementById("nipInput").value.trim();
-      const vis = document.getElementById("studentBox").style.display === "block";
-      if (nipConsultado && vis && dados[nipConsultado]) renderNotasPublico(nipConsultado);
 
-      if (document.getElementById("alunosPanel").style.display === "block") {
+      const nipConsultado = document.getElementById("nipInput").value.trim();
+      const studentBoxVisivel = document.getElementById("studentBox").style.display === "block";
+      if (nipConsultado && studentBoxVisivel && dados[nipConsultado]) {
+        renderNotasPublico(nipConsultado);
+      }
+
+      const alunosPanelAberto = document.getElementById("alunosPanel").style.display === "block";
+      if (alunosPanelAberto) {
         listarAlunos(document.getElementById("buscaAluno").value.trim());
+        const detalheAberto = document.getElementById("detalheAluno").style.display === "block";
+        if (detalheAberto) {
+          const editNipEl = document.getElementById("editNipAluno");
+          if (editNipEl) {
+            const nip = editNipEl.value.trim();
+            if (nip && dados[nip]) abrirAlunoDetalhe(nip);
+          }
+        }
       }
     }
 
@@ -485,6 +729,7 @@
       setMsg("msg", "", "");
 
       if (!nip) { setMsg("msg", "Por favor, digite um N° de Bordo.", "error"); return; }
+
       const aluno = dados[nip];
       if (!aluno) { setMsg("msg", "N° de Bordo não encontrado.", "error"); return; }
 
@@ -493,6 +738,7 @@
       const sb = document.getElementById("studentBox");
       sb.style.display = "block";
       sb.innerHTML = `<div class="inline-title">${escapeHtml(aluno.nome)}</div><div><b>N° de Bordo:</b> ${escapeHtml(nip)}</div>`;
+
       renderNotasPublico(nip);
     }
 
@@ -512,7 +758,7 @@
         wrap.innerHTML += `
           <div class="note-card">
             <div class="note-header">
-              <span class="badge ${n.tipo === "positiva" ? "positive" : "negative"}">${escapeHtml(n.tipo)}</span>
+              <span class="badge ${tipoClasse(n.tipo)}">${escapeHtml(tipoLabel(n.tipo))}</span>
               <span class="stamp">${escapeHtml(stamp)}</span>
             </div>
             <div>${escapeHtml(n.texto)}</div>
@@ -521,50 +767,58 @@
       });
     }
 
-    // ===== Login =====
-    function toggleSenha() {
-      const inp = document.getElementById("adminPassword");
+    // ===== Auth =====
+    function toggleSenhaLogin() {
+      const inp = document.getElementById("loginSenha");
       inp.type = inp.type === "password" ? "text" : "password";
     }
 
-    function entrarAdmin() {
-      const email = (document.getElementById("adminEmail").value || "").trim();
-      const senha = document.getElementById("adminPassword").value || "";
-      setMsg("adminMsg", "", "");
+    async function entrarSistema() {
+      const login = document.getElementById("loginNome").value.trim();
+      const senha = document.getElementById("loginSenha").value || "";
+      setMsg("authMsg", "", "");
 
-      if (!email || !senha) { setMsg("adminMsg", "Preencha Email e Senha.", "error"); return; }
-      if (!window.__fb) { setMsg("adminMsg", "Firebase não carregou. Recarregue a página.", "error"); return; }
+      if (!login || !senha) {
+        setMsg("authMsg", "Preencha login e senha.", "error");
+        return;
+      }
 
-      window.__fb.login(email, senha)
-        .then(() => {
-          setMsg("adminMsg", "Login realizado com sucesso.", "success");
-          document.getElementById("adminPassword").value = "";
-        })
-        .catch((err) => {
-          console.error(err);
-          setMsg("adminMsg", "Email ou senha inválidos.", "error");
-        });
+      const emailFake = loginParaEmailFake(login);
+
+      try {
+        await window.__fb.login(emailFake, senha);
+      } catch (err) {
+        console.error(err);
+        setMsg("authMsg", "Login inválido ou senha incorreta.", "error");
+      }
     }
 
-    function sairAdmin() {
-      if (!window.__fb) return;
-      window.__fb.logout().catch(console.error);
+    async function sairSistema() {
+      await window.__fb.logout();
+    }
 
-      adminLogado = false;
-      isAdm = false;
-      usuarioAtualEmail = "";
+    function setRestritoUI(logado, adm, perfil) {
+      adminLogado = !!logado;
+      isAdm = !!adm;
 
-      document.getElementById("gearBar").style.display = "none";
+      document.getElementById("gearBar").style.display = logado ? "flex" : "none";
       document.getElementById("gearMenu").style.display = "none";
+
       document.getElementById("alunosPanel").style.display = "none";
       document.getElementById("addObsPanel").style.display = "none";
-      document.getElementById("criarContaPanel").style.display = "none";
       document.getElementById("detalheAluno").style.display = "none";
-      document.getElementById("whoami").textContent = "---";
-      setMsg("adminMsg", "", "");
-      setMsg("cadMsg", "", "");
-      setMsg("obsMsg", "", "");
-      setMsg("criarContaMsg", "", "");
+      document.getElementById("monitoresPanel").style.display = "none";
+
+      document.getElementById("adminOnlyButtons").style.display = adm ? "flex" : "none";
+
+      const who = document.getElementById("whoami");
+      if (logado) {
+        const nome = (perfil && perfil.login) ? perfil.login : "Usuário";
+        const tag = adm ? "ADM" : "MONITOR";
+        who.textContent = `${nome} • ${tag}`;
+      } else {
+        who.textContent = "Logado";
+      }
     }
 
     function toggleGearMenu() {
@@ -573,77 +827,68 @@
       m.style.display = (m.style.display === "block") ? "none" : "block";
     }
 
+    // ===== Navegação painéis =====
     function abrirAlunos() {
-      if (!adminLogado) { setMsg("adminMsg", "Faça login para acessar.", "error"); return; }
+      if (!adminLogado) return;
       document.getElementById("alunosPanel").style.display = "block";
       document.getElementById("addObsPanel").style.display = "none";
-      document.getElementById("criarContaPanel").style.display = "none";
+      document.getElementById("monitoresPanel").style.display = "none";
       document.getElementById("detalheAluno").style.display = "none";
       setMsg("cadMsg", "", "");
+
+      document.getElementById("filtroPelotao").value = filtroPelotaoAtual;
+      document.getElementById("ordemAlunos").value = ordemAtual;
       listarAlunos(document.getElementById("buscaAluno").value.trim());
     }
 
     function abrirAddObs() {
-      if (!adminLogado) { setMsg("adminMsg", "Faça login para acessar.", "error"); return; }
+      if (!adminLogado) return;
       document.getElementById("addObsPanel").style.display = "block";
       document.getElementById("alunosPanel").style.display = "none";
-      document.getElementById("criarContaPanel").style.display = "none";
+      document.getElementById("monitoresPanel").style.display = "none";
       document.getElementById("detalheAluno").style.display = "none";
       setMsg("obsMsg", "", "");
       atualizarNomeAuto();
     }
 
-    function abrirCriarConta() {
-      if (!adminLogado) { setMsg("adminMsg", "Faça login para acessar.", "error"); return; }
-      if (!isAdm) { setMsg("adminMsg", "Apenas o ADM pode criar contas.", "error"); return; }
-
-      document.getElementById("criarContaPanel").style.display = "block";
-      document.getElementById("addObsPanel").style.display = "none";
+    function abrirMonitores() {
+      if (!adminLogado || !isAdm) return;
+      document.getElementById("monitoresPanel").style.display = "block";
       document.getElementById("alunosPanel").style.display = "none";
+      document.getElementById("addObsPanel").style.display = "none";
       document.getElementById("detalheAluno").style.display = "none";
       setMsg("criarContaMsg", "", "");
+      renderMonitores();
     }
 
-    function criarContaMonitor() {
-      if (!adminLogado || !isAdm) {
-        setMsg("criarContaMsg", "Apenas o ADM pode criar contas.", "error");
-        return;
-      }
-      const login = (document.getElementById("novoLogin").value || "").trim();
-      const senha = document.getElementById("novaSenha").value || "";
-      setMsg("criarContaMsg", "", "");
-
-      if (!login || !senha) {
-        setMsg("criarContaMsg", "Preencha login e senha.", "error");
-        return;
-      }
-      if (senha.length < 6) {
-        setMsg("criarContaMsg", "Senha fraca. Use pelo menos 6 caracteres.", "error");
-        return;
-      }
-
-      const emailFake = loginParaEmailFake(login);
-
-      window.__fb.criarUsuario(emailFake, senha)
-        .then(() => {
-          setMsg("criarContaMsg", `Conta criada: ${normalizarLogin(login)}`, "success");
-          document.getElementById("novoLogin").value = "";
-          document.getElementById("novaSenha").value = "";
-        })
-        .catch((err) => {
-          console.error(err);
-          const code = (err && err.code) ? String(err.code) : "";
-          if (code.includes("auth/email-already-in-use")) {
-            setMsg("criarContaMsg", "Esse login já existe. Escolha outro.", "error");
-          } else if (code.includes("auth/requires-recent-login")) {
-            setMsg("criarContaMsg", "Por segurança, faça login novamente e tente de novo.", "error");
-          } else {
-            setMsg("criarContaMsg", "Não foi possível criar a conta. Verifique no console do Firebase.", "error");
-          }
-        });
+    // ===== Filtros alunos =====
+    function aplicarFiltrosAlunos() {
+      filtroPelotaoAtual = document.getElementById("filtroPelotao").value || "";
+      ordemAtual = document.getElementById("ordemAlunos").value || "alfabetica";
+      listarAlunos(document.getElementById("buscaAluno").value.trim());
     }
 
-    // ===== Alunos =====
+    // ===== Cadastro aluno =====
+    function cadastrarAluno() {
+      const nip = document.getElementById("cadNip").value.trim();
+      const nome = document.getElementById("cadNome").value.trim();
+      setMsg("cadMsg", "", "");
+
+      if (!nip || !nome) { setMsg("cadMsg", "Preencha N° de Bordo e Nome.", "error"); return; }
+      if (dados[nip]) { setMsg("cadMsg", "Esse N° de Bordo já está cadastrado.", "error"); return; }
+
+      dados[nip] = { nome, notas: [] };
+      salvar();
+
+      setMsg("cadMsg", "Aluno cadastrado com sucesso.", "success");
+      document.getElementById("cadNip").value = "";
+      document.getElementById("cadNome").value = "";
+
+      listarAlunos(document.getElementById("buscaAluno").value.trim());
+      atualizarNomeAuto();
+    }
+
+    // ===== Lista / Busca alunos =====
     function listarAlunos(filtroTexto) {
       const lista = document.getElementById("listaAlunos");
       lista.innerHTML = "";
@@ -662,8 +907,11 @@
         });
       }
 
-      if (ordemAtual === "numero") entries.sort((a, b) => Number(a[0]) - Number(b[0]));
-      else entries.sort((a, b) => (a[1].nome || "").localeCompare(b[1].nome || ""));
+      if (ordemAtual === "numero") {
+        entries.sort((a, b) => Number(a[0]) - Number(b[0]));
+      } else {
+        entries.sort((a, b) => (a[1].nome || "").localeCompare(b[1].nome || ""));
+      }
 
       if (entries.length === 0) {
         lista.innerHTML = `<div class="note-card">Nenhum aluno encontrado com esses filtros.</div>`;
@@ -680,28 +928,129 @@
         `;
       });
     }
-    function filtrarAlunos() { listarAlunos(document.getElementById("buscaAluno").value.trim()); }
-    function limparBusca() { document.getElementById("buscaAluno").value = ""; listarAlunos(""); }
 
-    function cadastrarAluno() {
-      if (!adminLogado) { setMsg("cadMsg", "Faça login para cadastrar.", "error"); return; }
-      const nip = document.getElementById("cadNip").value.trim();
-      const nome = document.getElementById("cadNome").value.trim();
-      setMsg("cadMsg", "", "");
-      if (!nip || !nome) { setMsg("cadMsg", "Preencha N° de Bordo e Nome.", "error"); return; }
-      if (dados[nip]) { setMsg("cadMsg", "Esse N° de Bordo já está cadastrado.", "error"); return; }
-
-      dados[nip] = { nome, notas: [] };
-      salvarComTratamento("cadMsg").then(() => {
-        setMsg("cadMsg", "Aluno cadastrado com sucesso.", "success");
-        document.getElementById("cadNip").value = "";
-        document.getElementById("cadNome").value = "";
-        listarAlunos(document.getElementById("buscaAluno").value.trim());
-        atualizarNomeAuto();
-      });
+    function filtrarAlunos() {
+      listarAlunos(document.getElementById("buscaAluno").value.trim());
     }
 
-    // ===== Observações (mantém suas funções anteriores; aqui deixo só o essencial) =====
+    function limparBusca() {
+      document.getElementById("buscaAluno").value = "";
+      listarAlunos("");
+    }
+
+    // ===== Detalhe aluno =====
+    function abrirAlunoDetalhe(nip) {
+      const aluno = dados[nip];
+      if (!aluno) return;
+
+      const box = document.getElementById("detalheAluno");
+      box.style.display = "block";
+
+      const notas = aluno.notas || [];
+
+      let html = `
+        <div class="card" style="background:#ffffff">
+          <div class="inline-title">Editar aluno</div>
+
+          <div class="row">
+            <input id="editNomeAluno" value="${escapeAttr(aluno.nome)}" placeholder="Nome do aluno" />
+            <input id="editNipAluno" value="${escapeAttr(nip)}" placeholder="N° de Bordo do aluno" />
+          </div>
+
+          <div class="row">
+            <button onclick="salvarNomeNipAluno('${escapeAttr(nip)}')">Salvar alterações</button>
+            <button class="btn-danger" onclick="removerAluno('${escapeAttr(nip)}')">Remover aluno</button>
+          </div>
+
+          <div class="muted">* Ao editar o N° de Bordo, as observações vão junto para o novo N° de Bordo.</div>
+        </div>
+
+        <div class="inline-title" style="margin:10px 0;">Observações</div>
+      `;
+
+      if (notas.length === 0) {
+        html += `<div class="note-card">Sem observações para este aluno.</div>`;
+      } else {
+        notas.forEach(n => {
+          const stamp = n.atualizadoEm ? `Editado em: ${n.atualizadoEm}` : `Adicionado em: ${n.criadoEm}`;
+          html += `
+            <div class="note-card">
+              <div class="note-header">
+                <span class="badge ${tipoClasse(n.tipo)}">${escapeHtml(tipoLabel(n.tipo))}</span>
+                <span class="stamp">${escapeHtml(stamp)}</span>
+              </div>
+              <div>${escapeHtml(n.texto)}</div>
+
+              <div class="actions">
+                <button class="btn-secondary" onclick="editarObservacao('${escapeAttr(nip)}','${escapeAttr(n.id)}')">Editar</button>
+                <button class="btn-danger" onclick="removerObservacao('${escapeAttr(nip)}','${escapeAttr(n.id)}')">Remover</button>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      box.innerHTML = html;
+    }
+
+    function salvarNomeNipAluno(nipAntigo) {
+      const nomeNovo = (document.getElementById("editNomeAluno").value || "").trim();
+      const nipNovo = (document.getElementById("editNipAluno").value || "").trim();
+
+      if (!nomeNovo) { alert("Digite um nome válido."); return; }
+      if (!nipNovo) { alert("Digite um N° de Bordo válido."); return; }
+
+      if (nipNovo !== nipAntigo && dados[nipNovo]) {
+        alert("Esse N° de Bordo já existe. Escolha outro.");
+        return;
+      }
+
+      const aluno = dados[nipAntigo];
+      if (!aluno) return;
+
+      aluno.nome = nomeNovo;
+
+      if (nipNovo === nipAntigo) {
+        salvar();
+        listarAlunos(document.getElementById("buscaAluno").value.trim());
+        abrirAlunoDetalhe(nipAntigo);
+        atualizarNomeAuto();
+        return;
+      }
+
+      dados[nipNovo] = aluno;
+      delete dados[nipAntigo];
+      salvar();
+
+      listarAlunos(document.getElementById("buscaAluno").value.trim());
+      abrirAlunoDetalhe(nipNovo);
+      atualizarNomeAuto();
+
+      const consultado = document.getElementById("nipInput").value.trim();
+      if (consultado === nipAntigo) {
+        document.getElementById("nipInput").value = nipNovo;
+        buscarAnotacoes();
+      }
+    }
+
+    function removerAluno(nip) {
+      if (!confirm("Remover este aluno e TODAS as observações?")) return;
+      delete dados[nip];
+      salvar();
+
+      document.getElementById("detalheAluno").style.display = "none";
+      listarAlunos(document.getElementById("buscaAluno").value.trim());
+      atualizarNomeAuto();
+
+      if (document.getElementById("nipInput").value.trim() === nip) {
+        document.getElementById("nipInput").value = "";
+        document.getElementById("notesList").innerHTML = "";
+        document.getElementById("studentBox").style.display = "none";
+        setMsg("msg", "Aluno removido. Consulte outro N° de Bordo.", "success");
+      }
+    }
+
+    // ===== Observações =====
     function atualizarNomeAuto() {
       const nip = document.getElementById("obsNip").value.trim();
       const box = document.getElementById("obsNomeAuto");
@@ -712,67 +1061,249 @@
     }
 
     function adicionarObservacao() {
-      if (!adminLogado) { setMsg("obsMsg", "Faça login para adicionar observação.", "error"); return; }
       const nip = document.getElementById("obsNip").value.trim();
       const tipo = document.getElementById("obsTipo").value;
       const texto = document.getElementById("obsTexto").value.trim();
       setMsg("obsMsg", "", "");
-      if (!nip || !texto) { setMsg("obsMsg", "Preencha o N° de Bordo e o motivo.", "error"); return; }
-      if (!dados[nip]) { setMsg("obsMsg", "Este N° de Bordo não está cadastrado.", "error"); return; }
+
+      if (!nip || !texto) { setMsg("obsMsg", "Preencha o N° de Bordo e o motivo da observação.", "error"); return; }
+      if (!dados[nip]) { setMsg("obsMsg", "Este N° de Bordo não está cadastrado. Cadastre o aluno antes.", "error"); return; }
 
       dados[nip].notas = dados[nip].notas || [];
       dados[nip].notas.unshift({ id: uid(), tipo, texto, criadoEm: agora(), atualizadoEm: null });
 
-      salvarComTratamento("obsMsg").then(() => {
-        setMsg("obsMsg", "Observação adicionada com sucesso.", "success");
-        document.getElementById("obsTexto").value = "";
-        listarAlunos(document.getElementById("buscaAluno").value.trim());
+      salvar();
+      setMsg("obsMsg", "Observação adicionada com sucesso.", "success");
+      document.getElementById("obsTexto").value = "";
+
+      if (document.getElementById("detalheAluno").style.display === "block") abrirAlunoDetalhe(nip);
+      if (document.getElementById("nipInput").value.trim() === nip) buscarAnotacoes();
+
+      listarAlunos(document.getElementById("buscaAluno").value.trim());
+    }
+
+    function editarObservacao(nip, obsId) {
+      const aluno = dados[nip];
+      if (!aluno) return;
+
+      const idx = (aluno.notas || []).findIndex(x => x.id === obsId);
+      if (idx < 0) return;
+
+      const atual = aluno.notas[idx];
+      const novoTexto = prompt("Edite o texto da observação:", atual.texto);
+      if (novoTexto === null) return;
+
+      const txt = novoTexto.trim();
+      if (!txt) { alert("Texto vazio não é permitido."); return; }
+
+      const tipoAtual = atual.tipo || "bravo_zulu";
+      const novoTipo = prompt("Tipo: bravo_zulu | livro_bravo | parte_ocorrencia", tipoAtual);
+      let tipo = (novoTipo || "").trim().toLowerCase();
+      if (!["bravo_zulu","livro_bravo","parte_ocorrencia","positiva","negativa"].includes(tipo)) tipo = tipoAtual;
+
+      aluno.notas[idx].texto = txt;
+      aluno.notas[idx].tipo = tipo;
+      aluno.notas[idx].atualizadoEm = agora();
+      salvar();
+
+      abrirAlunoDetalhe(nip);
+      if (document.getElementById("nipInput").value.trim() === nip) buscarAnotacoes();
+    }
+
+    function removerObservacao(nip, obsId) {
+      if (!confirm("Remover esta observação?")) return;
+      const aluno = dados[nip];
+      if (!aluno) return;
+
+      aluno.notas = (aluno.notas || []).filter(x => x.id !== obsId);
+      salvar();
+
+      abrirAlunoDetalhe(nip);
+      if (document.getElementById("nipInput").value.trim() === nip) buscarAnotacoes();
+      listarAlunos(document.getElementById("buscaAluno").value.trim());
+    }
+
+    // ===== Monitores (ADM) =====
+    async function criarContaMonitor() {
+      if (!adminLogado || !isAdm) {
+        setMsg("criarContaMsg", "Apenas o ADM pode criar contas.", "error");
+        return;
+      }
+
+      const login = (document.getElementById("novoLogin").value || "").trim();
+      const senha = document.getElementById("novaSenha").value || "";
+      setMsg("criarContaMsg", "", "");
+
+      const norm = normalizarLogin(login);
+      if (!norm || !senha) {
+        setMsg("criarContaMsg", "Preencha login e senha.", "error");
+        return;
+      }
+      if (senha.length < 6) {
+        setMsg("criarContaMsg", "Senha fraca. Use pelo menos 6 caracteres.", "error");
+        return;
+      }
+
+      const emailFake = loginParaEmailFake(norm);
+
+      try {
+        // cria no Auth SEM derrubar sessão do ADM
+        const cred = await window.__fb.criarUsuarioSecondary(emailFake, senha);
+        const u = cred.user;
+
+        // registra no RTDB pra poder listar/ativar/desativar
+        await window.__fb.setPerfil(u.uid, {
+          uid: u.uid,
+          login: norm,
+          emailFake,
+          role: "monitor",
+          enabled: true,
+          createdAt: Date.now()
+        });
+
+        setMsg("criarContaMsg", `Monitor criado: ${norm}`, "success");
+        document.getElementById("novoLogin").value = "";
+        document.getElementById("novaSenha").value = "";
+      } catch (err) {
+        console.error(err);
+        const code = (err && err.code) ? String(err.code) : "";
+        if (code.includes("auth/email-already-in-use")) {
+          setMsg("criarContaMsg", "Esse login já existe. Escolha outro.", "error");
+        } else {
+          setMsg("criarContaMsg", "Não foi possível criar a conta. Verifique no Firebase.", "error");
+        }
+      }
+    }
+
+    function renderMonitores() {
+      const box = document.getElementById("listaMonitores");
+      if (!box) return;
+      box.innerHTML = "";
+
+      const entries = Object.entries(monitoresCache || {})
+        .map(([uid, p]) => [uid, p || {}])
+        .filter(([,p]) => p.role === "monitor"); // mostra só monitores
+
+      if (entries.length === 0) {
+        box.innerHTML = `<div class="note-card">Nenhum monitor cadastrado ainda.</div>`;
+        return;
+      }
+
+      entries.sort((a,b) => (a[1].login || "").localeCompare(b[1].login || ""));
+
+      entries.forEach(([uid, p]) => {
+        const enabled = p.enabled !== false;
+        const pill = enabled
+          ? `<span class="pill pill-ok">ATIVO</span>`
+          : `<span class="pill pill-off">DESATIVADO</span>`;
+
+        box.innerHTML += `
+          <div class="mon-item">
+            <div><b>${escapeHtml(p.login || "(sem login)")}</b>${pill}</div>
+            <div class="muted">UID: ${escapeHtml(uid)} • Criado: ${p.createdAt ? new Date(p.createdAt).toLocaleString() : "-"}</div>
+
+            <div class="actions">
+              <button class="${enabled ? "btn-warn" : ""}" onclick="toggleMonitor('${escapeAttr(uid)}')">
+                ${enabled ? "Desativar" : "Ativar"}
+              </button>
+              <button class="btn-danger" onclick="removerMonitorDoPainel('${escapeAttr(uid)}')">
+                Remover do painel
+              </button>
+            </div>
+
+            <div class="muted">
+              * “Remover do painel” apaga só o registro no banco. A conta ainda existe no Authentication (pra apagar de lá precisa Cloud Function).
+            </div>
+          </div>
+        `;
       });
     }
 
-    // ===== init =====
-    document.getElementById("nipInput").addEventListener("keypress", e => { if (e.key === "Enter") buscarAnotacoes(); });
-    document.getElementById("adminPassword").addEventListener("keypress", e => { if (e.key === "Enter") entrarAdmin(); });
-    document.getElementById("adminEmail").addEventListener("keypress", e => { if (e.key === "Enter") entrarAdmin(); });
+    async function toggleMonitor(uid) {
+      if (!adminLogado || !isAdm) return;
+      const p = monitoresCache[uid];
+      if (!p) return;
+
+      const novo = !(p.enabled !== false);
+      await window.__fb.updatePerfil(uid, { enabled: novo });
+    }
+
+    async function removerMonitorDoPainel(uid) {
+      if (!adminLogado || !isAdm) return;
+      if (!confirm("Remover este monitor do painel? (não apaga do Auth)")) return;
+      await window.__fb.removerPerfil(uid);
+    }
+
+    // ===== Eventos =====
+    document.getElementById("nipInput").addEventListener("keypress", e => {
+      if (e.key === "Enter") buscarAnotacoes();
+    });
+    document.getElementById("loginSenha").addEventListener("keypress", e => {
+      if (e.key === "Enter") entrarSistema();
+    });
     document.getElementById("obsNip").addEventListener("input", atualizarNomeAuto);
 
+    // ===== Boot: Realtime DB + Auth Gate =====
     (function iniciar() {
-      const wait = setInterval(() => {
-        if (!window.__fb) return;
-        clearInterval(wait);
+      // 1) Dados: escuta e seed se estiver null
+      window.__fb.escutarDados(async (novo) => {
+        if (novo === null || novo === undefined) {
+          await window.__fb.seedDados();
+          return;
+        }
+        dados = novo || {};
+        syncUIDepoisDeAtualizarDados();
+      });
 
-        window.__fb.onAuth((user) => {
-          adminLogado = !!user;
-          usuarioAtualEmail = user ? (user.email || "") : "";
-          isAdm = user ? window.__fb.isAdm(usuarioAtualEmail) : false;
+      // 2) Monitores: cache
+      window.__fb.escutarMonitores((m) => {
+        monitoresCache = m || {};
+        // atualiza painel se estiver aberto
+        if (document.getElementById("monitoresPanel").style.display === "block") {
+          renderMonitores();
+        }
+      });
 
-          document.getElementById("whoami").textContent = user ? emailFakeParaLogin(usuarioAtualEmail) : "---";
+      // 3) Auth: quando logar, verifica perfil (enabled) e define se é ADM
+      window.__fb.onAuth(async (user) => {
+        if (!user) {
+          setRestritoUI(false, false, null);
+          setMsg("authMsg", "Deslogado.", "info");
+          return;
+        }
 
-          const gearBar = document.getElementById("gearBar");
-          const gearMenu = document.getElementById("gearMenu");
+        const email = (user.email || "").toLowerCase();
+        const perfil = await window.__fb.getPerfil(user.uid);
 
-          if (adminLogado) {
-            gearBar.style.display = "flex";
-          } else {
-            gearBar.style.display = "none";
-            gearMenu.style.display = "none";
-            document.getElementById("alunosPanel").style.display = "none";
-            document.getElementById("addObsPanel").style.display = "none";
-            document.getElementById("criarContaPanel").style.display = "none";
-            document.getElementById("detalheAluno").style.display = "none";
-          }
-        });
+        // Se for admin pela allowlist, garante perfil admin no DB (opcional)
+        const admByEmail = ADM_ALLOWLIST.has(email);
 
-        window.__fb.escutar((novo) => {
-          if ((novo === null || novo === undefined) && !seeded) {
-            seeded = true;
-            window.__fb.seedIfEmpty().catch(console.error);
-            return;
-          }
-          dados = novo || {};
-          syncUIDepoisDeAtualizarDados();
-        });
-      }, 50);
+        // Se não existe perfil e é admin, cria
+        if (!perfil && admByEmail) {
+          await window.__fb.setPerfil(user.uid, {
+            uid: user.uid,
+            login: "admin",
+            emailFake: email,
+            role: "admin",
+            enabled: true,
+            createdAt: Date.now()
+          });
+        }
+
+        const perfil2 = await window.__fb.getPerfil(user.uid);
+        const enabled = perfil2 ? (perfil2.enabled !== false) : admByEmail; // admin allowlist passa
+        const adm = admByEmail || (perfil2 && perfil2.role === "admin");
+
+        if (!enabled) {
+          await window.__fb.logout();
+          setRestritoUI(false, false, null);
+          setMsg("authMsg", "Seu acesso foi desativado pelo ADM.", "error");
+          return;
+        }
+
+        setRestritoUI(true, adm, perfil2 || { login: "usuário" });
+        setMsg("authMsg", "Acesso liberado.", "success");
+      });
     })();
   </script>
 
