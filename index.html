@@ -1,3 +1,5 @@
+CÓDIGO ANTIGO PARA BACKUP:
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -68,9 +70,6 @@
     .btn-danger { background: #b02a37; }
     .btn-danger:hover { background: #8f1f2a; }
 
-    .btn-warn { background: #b45309; }
-    .btn-warn:hover { background: #92400e; }
-
     .message {
       display: none;
       margin: 10px 0 14px;
@@ -80,7 +79,6 @@
     }
     .message.success { background: #e7f4ea; color: #166534; display: block; }
     .message.error { background: #ffe5e5; color: #b00020; display: block; }
-    .message.info { background: #e8f1ff; color: #0b2c5f; display: block; }
 
     .divider { height: 1px; background: #dbe4f0; margin: 22px 0; }
 
@@ -117,11 +115,11 @@
       color: #fff;
       font-size: 12px;
       font-weight: bold;
-      text-transform: none;
+      text-transform: capitalize;
     }
-    .pos { background: #198754; }           /* Bravo Zulu */
-    .neg { background: #dc3545; }           /* Livro Bravo */
-    .veryneg { background: #111827; }       /* Parte de Ocorrência */
+    .positive { background: #198754; }
+    .negative { background: #dc3545; }
+
     .stamp { font-size: 12px; color: #6b7280; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
@@ -181,7 +179,6 @@
       font-weight: bold;
       width: 100%;
     }
-
     .filters {
       display: flex;
       gap: 10px;
@@ -189,26 +186,6 @@
       margin: 10px 0 6px;
     }
     .filters > * { flex: 1; min-width: 220px; }
-
-    /* Monitors list */
-    .mon-item {
-      padding: 10px 12px;
-      border: 1px solid #dde4ee;
-      border-radius: 10px;
-      background: #fff;
-      margin-bottom: 8px;
-    }
-    .pill {
-      display:inline-block;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: bold;
-      color: #fff;
-      margin-left: 6px;
-    }
-    .pill-ok { background:#198754; }
-    .pill-off { background:#6b7280; }
 
     @media (max-width: 640px) {
       .container { padding: 18px; }
@@ -234,24 +211,25 @@
 
     <div class="divider"></div>
 
-    <!-- ADM / MONITOR -->
+    <!-- ADM -->
     <div class="card">
-      <div class="inline-title">Área Restrita (ADM / Monitores)</div>
+      <div class="inline-title">Área do ADM</div>
 
+      <!-- ✅ Login Firebase (Email + Senha) -->
       <div class="row tight">
-        <input id="loginNome" placeholder="Login (ex: monitor.ferreira)" />
+        <input id="adminEmail" type="email" placeholder="Email ADM" autocomplete="username" />
         <div class="pw-wrap">
-          <input id="loginSenha" type="password" placeholder="Senha" />
-          <div class="eye-btn" onclick="toggleSenhaLogin()" title="Mostrar/ocultar senha">👁</div>
+          <input id="adminPassword" type="password" placeholder="Senha ADM" autocomplete="current-password" />
+          <div class="eye-btn" onclick="toggleSenha()" title="Mostrar/ocultar senha">👁</div>
         </div>
-        <button onclick="entrarSistema()">Entrar</button>
+        <button onclick="entrarAdmin()">Entrar</button>
       </div>
 
-      <div id="authMsg" class="message"></div>
+      <div id="adminMsg" class="message"></div>
 
       <!-- Barra com engrenagem -->
       <div id="gearBar" class="gear-bar">
-        <div style="font-weight:bold;color:#0b2c5f;" id="whoami">Logado</div>
+        <div style="font-weight:bold;color:#0b2c5f;">ADM logado</div>
         <div class="gear-btn" onclick="toggleGearMenu()" title="Menu">⚙️</div>
       </div>
 
@@ -260,11 +238,7 @@
         <div class="row">
           <button onclick="abrirAlunos()">Alunos</button>
           <button class="btn-secondary" onclick="abrirAddObs()">Adicionar observação</button>
-          <button class="btn-secondary" onclick="sairSistema()">Sair</button>
-        </div>
-
-        <div class="row" id="adminOnlyButtons" style="display:none;">
-          <button class="btn-warn" onclick="abrirMonitores()">Monitores</button>
+          <button class="btn-secondary" onclick="sairAdmin()">Sair</button>
         </div>
 
         <!-- Painel ALUNOS -->
@@ -277,6 +251,7 @@
             <button class="btn-secondary" onclick="limparBusca()">Limpar</button>
           </div>
 
+          <!-- ✅ Filtros -->
           <div class="filters">
             <select id="filtroPelotao" onchange="aplicarFiltrosAlunos()">
               <option value="">Pelotão: Todos</option>
@@ -323,9 +298,8 @@
 
           <div class="row">
             <select id="obsTipo">
-              <option value="bravo_zulu">Bravo Zulu (positiva)</option>
-              <option value="livro_bravo">Livro Bravo (negativa)</option>
-              <option value="parte_ocorrencia">Parte de Ocorrência (muito negativa)</option>
+              <option value="positiva">Positiva</option>
+              <option value="negativa">Negativa</option>
             </select>
           </div>
 
@@ -340,43 +314,20 @@
           <div id="obsMsg" class="message"></div>
           <div class="muted">* Para adicionar observação, o aluno precisa estar cadastrado.</div>
         </div>
-
-        <!-- Painel MONITORES (ADM) -->
-        <div id="monitoresPanel" style="display:none;">
-          <div class="inline-title">Monitores (somente ADM)</div>
-
-          <div class="card" style="background:#fff">
-            <div class="inline-title">Criar conta de Monitor</div>
-            <div class="row">
-              <input id="novoLogin" placeholder="Login (ex: monitor.ferreira)" />
-              <input id="novaSenha" type="password" placeholder="Senha (mín. 6)" />
-            </div>
-            <div class="row">
-              <button onclick="criarContaMonitor()">Criar</button>
-            </div>
-            <div id="criarContaMsg" class="message"></div>
-            <div class="muted">
-              * Observação: este painel lista/gerencia monitores no Banco (Realtime DB).<br/>
-              * Excluir usuário do <b>Authentication</b> pelo site (frontend) não é suportado sem Cloud Function.
-            </div>
-          </div>
-
-          <div class="card" style="background:#fff">
-            <div class="inline-title">Lista de Monitores</div>
-            <div id="monitoresMsg" class="message"></div>
-            <div id="listaMonitores"></div>
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
 
-  <!-- Firebase (App + RTDB + Auth) -->
+  <!-- ✅ Firebase Realtime DB + Auth (Email/Senha) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, set, onValue, get, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCH9AuvD9AoOp3QJV-ctpylnGJdhISpwKo",
@@ -389,17 +340,11 @@
       measurementId: "G-W0G2NZ78LN"
     };
 
-    // App principal (sessão normal)
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
 
-    // App secundário (para criar monitor sem derrubar sessão do ADM)
-    const secondaryApp = initializeApp(firebaseConfig, "secondary");
-    const secondaryAuth = getAuth(secondaryApp);
-
     const dadosRef = ref(db, "dados");
-    const monitoresRef = ref(db, "monitores"); // /monitores/{uid}
 
     // ✅ CARGA INICIAL (seed) — só se estiver vazio (null)
     const DEFAULT_DADOS = {
@@ -582,51 +527,45 @@
       "2328": { nome: "COUTINHO", notas: [] }
     };
 
-    // expõe "API" pro script normal
+    // 🔌 Ponte Firebase -> JS "normal"
     window.__fb = {
-      db,
-      auth,
-      secondaryAuth,
-      // dados
-      salvarDados: (dados) => set(dadosRef, dados),
-      escutarDados: (cb) => onValue(dadosRef, (snap) => cb(snap.val())),
-      seedDados: () => set(dadosRef, DEFAULT_DADOS),
-      // monitores
-      escutarMonitores: (cb) => onValue(monitoresRef, (snap) => cb(snap.val() || {})),
-      getPerfil: async (uid) => {
-        const s = await get(ref(db, `monitores/${uid}`));
-        return s.val();
+      // leitura pública
+      escutar(callback) {
+        return onValue(dadosRef, (snap) => callback(snap.val()));
       },
-      setPerfil: (uid, payload) => set(ref(db, `monitores/${uid}`), payload),
-      updatePerfil: (uid, payload) => update(ref(db, `monitores/${uid}`), payload),
-      removerPerfil: (uid) => remove(ref(db, `monitores/${uid}`)),
+
+      // gravação (vai falhar se não estiver logado e as Rules estiverem ".write": "auth != null")
+      salvar(dados) {
+        return set(dadosRef, dados);
+      },
+
+      // seed (somente quando banco está vazio)
+      seedIfEmpty() {
+        return set(dadosRef, DEFAULT_DADOS);
+      },
+
       // auth
-      login: (email, senha) => signInWithEmailAndPassword(auth, email, senha),
-      logout: () => signOut(auth),
-      criarUsuarioSecondary: (email, senha) => createUserWithEmailAndPassword(secondaryAuth, email, senha),
-      onAuth: (cb) => onAuthStateChanged(auth, cb),
+      login(email, senha) {
+        return signInWithEmailAndPassword(auth, email, senha);
+      },
+      logout() {
+        return signOut(auth);
+      },
+      onAuth(callback) {
+        return onAuthStateChanged(auth, callback);
+      }
     };
   </script>
 
-  <!-- App Script -->
   <script>
-    // ✅ EMAIL REAL DO ADM (confirmado pela sua imagem)
-    const ADM_ALLOWLIST = new Set([
-      "admin@eampe.com"
-    ]);
-
     let dados = {};
-    let adminLogado = false;     // na prática: "logado e liberado"
-    let isAdm = false;
+    let adminLogado = false;
+    let seeded = false;
 
     // filtros
     let filtroPelotaoAtual = "";
     let ordemAtual = "alfabetica";
 
-    // cache de monitores (para UI)
-    let monitoresCache = {};
-
-    // ===== Utils =====
     function uid() {
       return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
     }
@@ -646,58 +585,40 @@
     }
     function setMsg(elId, text, type) {
       const el = document.getElementById(elId);
-      if (!el) return;
       el.className = "message " + (type || "");
       el.textContent = text || "";
       el.style.display = text ? "block" : "none";
     }
 
-    function normalizarLogin(login) {
-      return String(login || "")
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, ".")
-        .replace(/[^a-z0-9._-]/g, "");
-    }
-
-    // “email fake” só pra usar Auth email/senha por baixo
-    function loginParaEmailFake(login) {
-      const l = normalizarLogin(login);
-      return `${l}@monitores.eampe.local`;
+    function salvarComTratamento(msgElId) {
+      if (!window.__fb) return Promise.resolve();
+      return window.__fb.salvar(dados).catch((err) => {
+        console.error("Erro ao salvar no Firebase:", err);
+        const code = (err && err.code) ? String(err.code) : "";
+        // Quando Rules bloqueiam, normalmente vem PERMISSION_DENIED
+        if (code.includes("PERMISSION_DENIED")) {
+          setMsg(msgElId || "adminMsg", "Sem permissão para salvar. Faça login de ADM.", "error");
+        } else {
+          setMsg(msgElId || "adminMsg", "Falha ao salvar no banco. Verifique conexão/regras.", "error");
+        }
+        throw err;
+      });
     }
 
     function getPelotaoFromBordo(nip) {
       const s = String(nip || "").trim();
       if (s.length < 2) return "";
-      return s.slice(0, 2);
+      return s.slice(0, 2); // 1101 -> "11"
     }
 
-    function tipoLabel(tipo) {
-      switch (tipo) {
-        case "bravo_zulu": return "Bravo Zulu";
-        case "livro_bravo": return "Livro Bravo";
-        case "parte_ocorrencia": return "Parte de Ocorrência";
-        // migração (caso tenha dados antigos)
-        case "positiva": return "Bravo Zulu";
-        case "negativa": return "Livro Bravo";
-        default: return String(tipo || "");
-      }
+    function aplicarFiltrosAlunos() {
+      const pel = document.getElementById("filtroPelotao").value;
+      const ord = document.getElementById("ordemAlunos").value;
+      filtroPelotaoAtual = pel || "";
+      ordemAtual = ord || "alfabetica";
+      listarAlunos(document.getElementById("buscaAluno").value.trim());
     }
 
-    function tipoClasse(tipo) {
-      if (tipo === "bravo_zulu" || tipo === "positiva") return "pos";
-      if (tipo === "livro_bravo" || tipo === "negativa") return "neg";
-      if (tipo === "parte_ocorrencia") return "veryneg";
-      return "neg";
-    }
-
-    // ===== Firebase write =====
-    function salvar() {
-      if (!window.__fb) return;
-      return window.__fb.salvarDados(dados);
-    }
-
-    // ===== UI sync =====
     function syncUIDepoisDeAtualizarDados() {
       atualizarNomeAuto();
 
@@ -758,7 +679,7 @@
         wrap.innerHTML += `
           <div class="note-card">
             <div class="note-header">
-              <span class="badge ${tipoClasse(n.tipo)}">${escapeHtml(tipoLabel(n.tipo))}</span>
+              <span class="badge ${n.tipo === "positiva" ? "positive" : "negative"}">${escapeHtml(n.tipo)}</span>
               <span class="stamp">${escapeHtml(stamp)}</span>
             </div>
             <div>${escapeHtml(n.texto)}</div>
@@ -767,58 +688,55 @@
       });
     }
 
-    // ===== Auth =====
-    function toggleSenhaLogin() {
-      const inp = document.getElementById("loginSenha");
+    // ===== ADM (Firebase Auth) =====
+    function toggleSenha() {
+      const inp = document.getElementById("adminPassword");
       inp.type = inp.type === "password" ? "text" : "password";
     }
 
-    async function entrarSistema() {
-      const login = document.getElementById("loginNome").value.trim();
-      const senha = document.getElementById("loginSenha").value || "";
-      setMsg("authMsg", "", "");
+    function entrarAdmin() {
+      const email = (document.getElementById("adminEmail").value || "").trim();
+      const senha = document.getElementById("adminPassword").value || "";
+      setMsg("adminMsg", "", "");
 
-      if (!login || !senha) {
-        setMsg("authMsg", "Preencha login e senha.", "error");
+      if (!email || !senha) {
+        setMsg("adminMsg", "Preencha Email e Senha do ADM.", "error");
+        return;
+      }
+      if (!window.__fb) {
+        setMsg("adminMsg", "Firebase não carregou. Recarregue a página.", "error");
         return;
       }
 
-      const emailFake = loginParaEmailFake(login);
-
-      try {
-        await window.__fb.login(emailFake, senha);
-      } catch (err) {
-        console.error(err);
-        setMsg("authMsg", "Login inválido ou senha incorreta.", "error");
-      }
+      window.__fb.login(email, senha)
+        .then(() => {
+          // onAuthStateChanged vai assumir e abrir o ADM
+          setMsg("adminMsg", "Acesso liberado com sucesso.", "success");
+          document.getElementById("adminPassword").value = "";
+        })
+        .catch((err) => {
+          console.error("Erro login:", err);
+          setMsg("adminMsg", "Login inválido. Verifique email/senha.", "error");
+        });
     }
 
-    async function sairSistema() {
-      await window.__fb.logout();
-    }
+    function sairAdmin() {
+      if (!window.__fb) return;
 
-    function setRestritoUI(logado, adm, perfil) {
-      adminLogado = !!logado;
-      isAdm = !!adm;
+      window.__fb.logout().catch((err) => {
+        console.error("Erro logout:", err);
+      });
 
-      document.getElementById("gearBar").style.display = logado ? "flex" : "none";
+      // limpeza visual imediata
+      adminLogado = false;
+      document.getElementById("gearBar").style.display = "none";
       document.getElementById("gearMenu").style.display = "none";
-
       document.getElementById("alunosPanel").style.display = "none";
       document.getElementById("addObsPanel").style.display = "none";
       document.getElementById("detalheAluno").style.display = "none";
-      document.getElementById("monitoresPanel").style.display = "none";
-
-      document.getElementById("adminOnlyButtons").style.display = adm ? "flex" : "none";
-
-      const who = document.getElementById("whoami");
-      if (logado) {
-        const nome = (perfil && perfil.login) ? perfil.login : "Usuário";
-        const tag = adm ? "ADM" : "MONITOR";
-        who.textContent = `${nome} • ${tag}`;
-      } else {
-        who.textContent = "Logado";
-      }
+      setMsg("adminMsg", "", "");
+      setMsg("cadMsg", "", "");
+      setMsg("obsMsg", "", "");
     }
 
     function toggleGearMenu() {
@@ -827,49 +745,30 @@
       m.style.display = (m.style.display === "block") ? "none" : "block";
     }
 
-    // ===== Navegação painéis =====
     function abrirAlunos() {
-      if (!adminLogado) return;
+      if (!adminLogado) { setMsg("adminMsg", "Faça login para acessar o ADM.", "error"); return; }
       document.getElementById("alunosPanel").style.display = "block";
       document.getElementById("addObsPanel").style.display = "none";
-      document.getElementById("monitoresPanel").style.display = "none";
       document.getElementById("detalheAluno").style.display = "none";
       setMsg("cadMsg", "", "");
-
       document.getElementById("filtroPelotao").value = filtroPelotaoAtual;
       document.getElementById("ordemAlunos").value = ordemAtual;
-      listarAlunos(document.getElementById("buscaAluno").value.trim());
+      listarAlunos();
     }
 
     function abrirAddObs() {
-      if (!adminLogado) return;
+      if (!adminLogado) { setMsg("adminMsg", "Faça login para acessar o ADM.", "error"); return; }
       document.getElementById("addObsPanel").style.display = "block";
       document.getElementById("alunosPanel").style.display = "none";
-      document.getElementById("monitoresPanel").style.display = "none";
       document.getElementById("detalheAluno").style.display = "none";
       setMsg("obsMsg", "", "");
       atualizarNomeAuto();
     }
 
-    function abrirMonitores() {
-      if (!adminLogado || !isAdm) return;
-      document.getElementById("monitoresPanel").style.display = "block";
-      document.getElementById("alunosPanel").style.display = "none";
-      document.getElementById("addObsPanel").style.display = "none";
-      document.getElementById("detalheAluno").style.display = "none";
-      setMsg("criarContaMsg", "", "");
-      renderMonitores();
-    }
-
-    // ===== Filtros alunos =====
-    function aplicarFiltrosAlunos() {
-      filtroPelotaoAtual = document.getElementById("filtroPelotao").value || "";
-      ordemAtual = document.getElementById("ordemAlunos").value || "alfabetica";
-      listarAlunos(document.getElementById("buscaAluno").value.trim());
-    }
-
     // ===== Cadastro aluno =====
     function cadastrarAluno() {
+      if (!adminLogado) { setMsg("cadMsg", "Faça login para cadastrar aluno.", "error"); return; }
+
       const nip = document.getElementById("cadNip").value.trim();
       const nome = document.getElementById("cadNome").value.trim();
       setMsg("cadMsg", "", "");
@@ -878,14 +777,15 @@
       if (dados[nip]) { setMsg("cadMsg", "Esse N° de Bordo já está cadastrado.", "error"); return; }
 
       dados[nip] = { nome, notas: [] };
-      salvar();
 
-      setMsg("cadMsg", "Aluno cadastrado com sucesso.", "success");
-      document.getElementById("cadNip").value = "";
-      document.getElementById("cadNome").value = "";
-
-      listarAlunos(document.getElementById("buscaAluno").value.trim());
-      atualizarNomeAuto();
+      salvarComTratamento("cadMsg")
+        .then(() => {
+          setMsg("cadMsg", "Aluno cadastrado com sucesso.", "success");
+          document.getElementById("cadNip").value = "";
+          document.getElementById("cadNome").value = "";
+          listarAlunos(document.getElementById("buscaAluno").value.trim());
+          atualizarNomeAuto();
+        });
     }
 
     // ===== Lista / Busca alunos =====
@@ -930,7 +830,8 @@
     }
 
     function filtrarAlunos() {
-      listarAlunos(document.getElementById("buscaAluno").value.trim());
+      const f = document.getElementById("buscaAluno").value.trim();
+      listarAlunos(f);
     }
 
     function limparBusca() {
@@ -940,6 +841,8 @@
 
     // ===== Detalhe aluno =====
     function abrirAlunoDetalhe(nip) {
+      if (!adminLogado) return;
+
       const aluno = dados[nip];
       if (!aluno) return;
 
@@ -976,7 +879,7 @@
           html += `
             <div class="note-card">
               <div class="note-header">
-                <span class="badge ${tipoClasse(n.tipo)}">${escapeHtml(tipoLabel(n.tipo))}</span>
+                <span class="badge ${n.tipo === "positiva" ? "positive" : "negative"}">${escapeHtml(n.tipo)}</span>
                 <span class="stamp">${escapeHtml(stamp)}</span>
               </div>
               <div>${escapeHtml(n.texto)}</div>
@@ -994,6 +897,8 @@
     }
 
     function salvarNomeNipAluno(nipAntigo) {
+      if (!adminLogado) return;
+
       const nomeNovo = (document.getElementById("editNomeAluno").value || "").trim();
       const nipNovo = (document.getElementById("editNipAluno").value || "").trim();
 
@@ -1011,43 +916,48 @@
       aluno.nome = nomeNovo;
 
       if (nipNovo === nipAntigo) {
-        salvar();
-        listarAlunos(document.getElementById("buscaAluno").value.trim());
-        abrirAlunoDetalhe(nipAntigo);
-        atualizarNomeAuto();
+        salvarComTratamento("adminMsg").then(() => {
+          listarAlunos(document.getElementById("buscaAluno").value.trim());
+          abrirAlunoDetalhe(nipAntigo);
+          atualizarNomeAuto();
+        });
         return;
       }
 
       dados[nipNovo] = aluno;
       delete dados[nipAntigo];
-      salvar();
 
-      listarAlunos(document.getElementById("buscaAluno").value.trim());
-      abrirAlunoDetalhe(nipNovo);
-      atualizarNomeAuto();
+      salvarComTratamento("adminMsg").then(() => {
+        listarAlunos(document.getElementById("buscaAluno").value.trim());
+        abrirAlunoDetalhe(nipNovo);
+        atualizarNomeAuto();
 
-      const consultado = document.getElementById("nipInput").value.trim();
-      if (consultado === nipAntigo) {
-        document.getElementById("nipInput").value = nipNovo;
-        buscarAnotacoes();
-      }
+        const consultado = document.getElementById("nipInput").value.trim();
+        if (consultado === nipAntigo) {
+          document.getElementById("nipInput").value = nipNovo;
+          buscarAnotacoes();
+        }
+      });
     }
 
     function removerAluno(nip) {
+      if (!adminLogado) return;
+
       if (!confirm("Remover este aluno e TODAS as observações?")) return;
       delete dados[nip];
-      salvar();
 
-      document.getElementById("detalheAluno").style.display = "none";
-      listarAlunos(document.getElementById("buscaAluno").value.trim());
-      atualizarNomeAuto();
+      salvarComTratamento("adminMsg").then(() => {
+        document.getElementById("detalheAluno").style.display = "none";
+        listarAlunos(document.getElementById("buscaAluno").value.trim());
+        atualizarNomeAuto();
 
-      if (document.getElementById("nipInput").value.trim() === nip) {
-        document.getElementById("nipInput").value = "";
-        document.getElementById("notesList").innerHTML = "";
-        document.getElementById("studentBox").style.display = "none";
-        setMsg("msg", "Aluno removido. Consulte outro N° de Bordo.", "success");
-      }
+        if (document.getElementById("nipInput").value.trim() === nip) {
+          document.getElementById("nipInput").value = "";
+          document.getElementById("notesList").innerHTML = "";
+          document.getElementById("studentBox").style.display = "none";
+          setMsg("msg", "Aluno removido. Consulte outro N° de Bordo.", "success");
+        }
+      });
     }
 
     // ===== Observações =====
@@ -1061,6 +971,8 @@
     }
 
     function adicionarObservacao() {
+      if (!adminLogado) { setMsg("obsMsg", "Faça login para adicionar observação.", "error"); return; }
+
       const nip = document.getElementById("obsNip").value.trim();
       const tipo = document.getElementById("obsTipo").value;
       const texto = document.getElementById("obsTexto").value.trim();
@@ -1072,17 +984,20 @@
       dados[nip].notas = dados[nip].notas || [];
       dados[nip].notas.unshift({ id: uid(), tipo, texto, criadoEm: agora(), atualizadoEm: null });
 
-      salvar();
-      setMsg("obsMsg", "Observação adicionada com sucesso.", "success");
-      document.getElementById("obsTexto").value = "";
+      salvarComTratamento("obsMsg").then(() => {
+        setMsg("obsMsg", "Observação adicionada com sucesso.", "success");
+        document.getElementById("obsTexto").value = "";
 
-      if (document.getElementById("detalheAluno").style.display === "block") abrirAlunoDetalhe(nip);
-      if (document.getElementById("nipInput").value.trim() === nip) buscarAnotacoes();
+        if (document.getElementById("detalheAluno").style.display === "block") abrirAlunoDetalhe(nip);
+        if (document.getElementById("nipInput").value.trim() === nip) buscarAnotacoes();
 
-      listarAlunos(document.getElementById("buscaAluno").value.trim());
+        listarAlunos(document.getElementById("buscaAluno").value.trim());
+      });
     }
 
     function editarObservacao(nip, obsId) {
+      if (!adminLogado) return;
+
       const aluno = dados[nip];
       if (!aluno) return;
 
@@ -1096,216 +1011,89 @@
       const txt = novoTexto.trim();
       if (!txt) { alert("Texto vazio não é permitido."); return; }
 
-      const tipoAtual = atual.tipo || "bravo_zulu";
-      const novoTipo = prompt("Tipo: bravo_zulu | livro_bravo | parte_ocorrencia", tipoAtual);
+      const novoTipo = prompt("Tipo (positiva ou negativa):", atual.tipo);
       let tipo = (novoTipo || "").trim().toLowerCase();
-      if (!["bravo_zulu","livro_bravo","parte_ocorrencia","positiva","negativa"].includes(tipo)) tipo = tipoAtual;
+      if (tipo !== "positiva" && tipo !== "negativa") tipo = atual.tipo;
 
       aluno.notas[idx].texto = txt;
       aluno.notas[idx].tipo = tipo;
       aluno.notas[idx].atualizadoEm = agora();
-      salvar();
 
-      abrirAlunoDetalhe(nip);
-      if (document.getElementById("nipInput").value.trim() === nip) buscarAnotacoes();
+      salvarComTratamento("adminMsg").then(() => {
+        abrirAlunoDetalhe(nip);
+        if (document.getElementById("nipInput").value.trim() === nip) buscarAnotacoes();
+      });
     }
 
     function removerObservacao(nip, obsId) {
+      if (!adminLogado) return;
+
       if (!confirm("Remover esta observação?")) return;
       const aluno = dados[nip];
       if (!aluno) return;
 
       aluno.notas = (aluno.notas || []).filter(x => x.id !== obsId);
-      salvar();
 
-      abrirAlunoDetalhe(nip);
-      if (document.getElementById("nipInput").value.trim() === nip) buscarAnotacoes();
-      listarAlunos(document.getElementById("buscaAluno").value.trim());
-    }
-
-    // ===== Monitores (ADM) =====
-    async function criarContaMonitor() {
-      if (!adminLogado || !isAdm) {
-        setMsg("criarContaMsg", "Apenas o ADM pode criar contas.", "error");
-        return;
-      }
-
-      const login = (document.getElementById("novoLogin").value || "").trim();
-      const senha = document.getElementById("novaSenha").value || "";
-      setMsg("criarContaMsg", "", "");
-
-      const norm = normalizarLogin(login);
-      if (!norm || !senha) {
-        setMsg("criarContaMsg", "Preencha login e senha.", "error");
-        return;
-      }
-      if (senha.length < 6) {
-        setMsg("criarContaMsg", "Senha fraca. Use pelo menos 6 caracteres.", "error");
-        return;
-      }
-
-      const emailFake = loginParaEmailFake(norm);
-
-      try {
-        // cria no Auth SEM derrubar sessão do ADM
-        const cred = await window.__fb.criarUsuarioSecondary(emailFake, senha);
-        const u = cred.user;
-
-        // registra no RTDB pra poder listar/ativar/desativar
-        await window.__fb.setPerfil(u.uid, {
-          uid: u.uid,
-          login: norm,
-          emailFake,
-          role: "monitor",
-          enabled: true,
-          createdAt: Date.now()
-        });
-
-        setMsg("criarContaMsg", `Monitor criado: ${norm}`, "success");
-        document.getElementById("novoLogin").value = "";
-        document.getElementById("novaSenha").value = "";
-      } catch (err) {
-        console.error(err);
-        const code = (err && err.code) ? String(err.code) : "";
-        if (code.includes("auth/email-already-in-use")) {
-          setMsg("criarContaMsg", "Esse login já existe. Escolha outro.", "error");
-        } else {
-          setMsg("criarContaMsg", "Não foi possível criar a conta. Verifique no Firebase.", "error");
-        }
-      }
-    }
-
-    function renderMonitores() {
-      const box = document.getElementById("listaMonitores");
-      if (!box) return;
-      box.innerHTML = "";
-
-      const entries = Object.entries(monitoresCache || {})
-        .map(([uid, p]) => [uid, p || {}])
-        .filter(([,p]) => p.role === "monitor"); // mostra só monitores
-
-      if (entries.length === 0) {
-        box.innerHTML = `<div class="note-card">Nenhum monitor cadastrado ainda.</div>`;
-        return;
-      }
-
-      entries.sort((a,b) => (a[1].login || "").localeCompare(b[1].login || ""));
-
-      entries.forEach(([uid, p]) => {
-        const enabled = p.enabled !== false;
-        const pill = enabled
-          ? `<span class="pill pill-ok">ATIVO</span>`
-          : `<span class="pill pill-off">DESATIVADO</span>`;
-
-        box.innerHTML += `
-          <div class="mon-item">
-            <div><b>${escapeHtml(p.login || "(sem login)")}</b>${pill}</div>
-            <div class="muted">UID: ${escapeHtml(uid)} • Criado: ${p.createdAt ? new Date(p.createdAt).toLocaleString() : "-"}</div>
-
-            <div class="actions">
-              <button class="${enabled ? "btn-warn" : ""}" onclick="toggleMonitor('${escapeAttr(uid)}')">
-                ${enabled ? "Desativar" : "Ativar"}
-              </button>
-              <button class="btn-danger" onclick="removerMonitorDoPainel('${escapeAttr(uid)}')">
-                Remover do painel
-              </button>
-            </div>
-
-            <div class="muted">
-              * “Remover do painel” apaga só o registro no banco. A conta ainda existe no Authentication (pra apagar de lá precisa Cloud Function).
-            </div>
-          </div>
-        `;
+      salvarComTratamento("adminMsg").then(() => {
+        abrirAlunoDetalhe(nip);
+        if (document.getElementById("nipInput").value.trim() === nip) buscarAnotacoes();
+        listarAlunos(document.getElementById("buscaAluno").value.trim());
       });
     }
 
-    async function toggleMonitor(uid) {
-      if (!adminLogado || !isAdm) return;
-      const p = monitoresCache[uid];
-      if (!p) return;
-
-      const novo = !(p.enabled !== false);
-      await window.__fb.updatePerfil(uid, { enabled: novo });
-    }
-
-    async function removerMonitorDoPainel(uid) {
-      if (!adminLogado || !isAdm) return;
-      if (!confirm("Remover este monitor do painel? (não apaga do Auth)")) return;
-      await window.__fb.removerPerfil(uid);
-    }
-
-    // ===== Eventos =====
+    // Events
     document.getElementById("nipInput").addEventListener("keypress", e => {
       if (e.key === "Enter") buscarAnotacoes();
     });
-    document.getElementById("loginSenha").addEventListener("keypress", e => {
-      if (e.key === "Enter") entrarSistema();
+    document.getElementById("adminPassword").addEventListener("keypress", e => {
+      if (e.key === "Enter") entrarAdmin();
+    });
+    document.getElementById("adminEmail").addEventListener("keypress", e => {
+      if (e.key === "Enter") entrarAdmin();
     });
     document.getElementById("obsNip").addEventListener("input", atualizarNomeAuto);
 
-    // ===== Boot: Realtime DB + Auth Gate =====
-    (function iniciar() {
-      // 1) Dados: escuta e seed se estiver null
-      window.__fb.escutarDados(async (novo) => {
-        if (novo === null || novo === undefined) {
-          await window.__fb.seedDados();
-          return;
-        }
-        dados = novo || {};
-        syncUIDepoisDeAtualizarDados();
-      });
+    // ✅ Realtime + seed automático se vazio
+    (function iniciarRealtime() {
+      const wait = setInterval(() => {
+        if (!window.__fb) return;
+        clearInterval(wait);
 
-      // 2) Monitores: cache
-      window.__fb.escutarMonitores((m) => {
-        monitoresCache = m || {};
-        // atualiza painel se estiver aberto
-        if (document.getElementById("monitoresPanel").style.display === "block") {
-          renderMonitores();
-        }
-      });
+        // 🔐 Estado do login (mostra/esconde ADM)
+        window.__fb.onAuth((user) => {
+          adminLogado = !!user;
 
-      // 3) Auth: quando logar, verifica perfil (enabled) e define se é ADM
-      window.__fb.onAuth(async (user) => {
-        if (!user) {
-          setRestritoUI(false, false, null);
-          setMsg("authMsg", "Deslogado.", "info");
-          return;
-        }
+          const gearBar = document.getElementById("gearBar");
+          const gearMenu = document.getElementById("gearMenu");
 
-        const email = (user.email || "").toLowerCase();
-        const perfil = await window.__fb.getPerfil(user.uid);
+          if (adminLogado) {
+            gearBar.style.display = "flex";
+          } else {
+            gearBar.style.display = "none";
+            gearMenu.style.display = "none";
+            document.getElementById("alunosPanel").style.display = "none";
+            document.getElementById("addObsPanel").style.display = "none";
+            document.getElementById("detalheAluno").style.display = "none";
+          }
+        });
 
-        // Se for admin pela allowlist, garante perfil admin no DB (opcional)
-        const admByEmail = ADM_ALLOWLIST.has(email);
-
-        // Se não existe perfil e é admin, cria
-        if (!perfil && admByEmail) {
-          await window.__fb.setPerfil(user.uid, {
-            uid: user.uid,
-            login: "admin",
-            emailFake: email,
-            role: "admin",
-            enabled: true,
-            createdAt: Date.now()
-          });
-        }
-
-        const perfil2 = await window.__fb.getPerfil(user.uid);
-        const enabled = perfil2 ? (perfil2.enabled !== false) : admByEmail; // admin allowlist passa
-        const adm = admByEmail || (perfil2 && perfil2.role === "admin");
-
-        if (!enabled) {
-          await window.__fb.logout();
-          setRestritoUI(false, false, null);
-          setMsg("authMsg", "Seu acesso foi desativado pelo ADM.", "error");
-          return;
-        }
-
-        setRestritoUI(true, adm, perfil2 || { login: "usuário" });
-        setMsg("authMsg", "Acesso liberado.", "success");
-      });
+        // 📡 Escuta do banco
+        window.__fb.escutar((novo) => {
+          // seed só quando for null/undefined
+          if ((novo === null || novo === undefined) && !seeded) {
+            seeded = true;
+            window.__fb.seedIfEmpty().catch((err) => {
+              console.error("Erro no seed:", err);
+            });
+            return;
+          }
+          dados = novo || {};
+          syncUIDepoisDeAtualizarDados();
+        });
+      }, 50);
     })();
   </script>
 
 </body>
 </html>
+
