@@ -115,8 +115,9 @@
       font-weight: bold;
       text-transform: capitalize;
     }
-    .positive { background: #198754; }
-    .negative { background: #dc3545; }
+    .tipo-bravo-zulu { background: #198754; }
+    .tipo-livro-bravo { background: #dc3545; }
+    .tipo-parte-ocorrencia { background: #7f1d1d; }
 
     .stamp { font-size: 12px; color: #6b7280; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
@@ -296,8 +297,9 @@
 
           <div class="row">
             <select id="obsTipo">
-              <option value="positiva">Positiva</option>
-              <option value="negativa">Negativa</option>
+              <option value="bravo zulu">Bravo Zulu (positiva)</option>
+              <option value="livro bravo">Livro Bravo (negativa)</option>
+              <option value="parte de ocorrencia">Parte de Ocorrencia (grave)</option>
             </select>
           </div>
 
@@ -581,6 +583,14 @@
     function escapeAttr(str) {
       return escapeHtml(str).replaceAll("`", "&#096;");
     }
+    function classeTipoNota(tipo) {
+      const t = String(tipo || "").trim().toLowerCase();
+      if (t === "bravo zulu") return "tipo-bravo-zulu";
+      if (t === "livro bravo") return "tipo-livro-bravo";
+      if (t === "parte de ocorrencia") return "tipo-parte-ocorrencia";
+      return "tipo-livro-bravo";
+    }
+
     function setMsg(elId, text, type) {
       const el = document.getElementById(elId);
       el.className = "message " + (type || "");
@@ -677,7 +687,7 @@
         wrap.innerHTML += `
           <div class="note-card">
             <div class="note-header">
-              <span class="badge ${n.tipo === "positiva" ? "positive" : "negative"}">${escapeHtml(n.tipo)}</span>
+              <span class="badge ${classeTipoNota(n.tipo)}">${escapeHtml(n.tipo)}</span>
               <span class="stamp">${escapeHtml(stamp)}</span>
             </div>
             <div>${escapeHtml(n.texto)}</div>
@@ -877,7 +887,7 @@
           html += `
             <div class="note-card">
               <div class="note-header">
-                <span class="badge ${n.tipo === "positiva" ? "positive" : "negative"}">${escapeHtml(n.tipo)}</span>
+                <span class="badge ${classeTipoNota(n.tipo)}">${escapeHtml(n.tipo)}</span>
                 <span class="stamp">${escapeHtml(stamp)}</span>
               </div>
               <div>${escapeHtml(n.texto)}</div>
@@ -1009,9 +1019,10 @@
       const txt = novoTexto.trim();
       if (!txt) { alert("Texto vazio não é permitido."); return; }
 
-      const novoTipo = prompt("Tipo (positiva ou negativa):", atual.tipo);
+      const novoTipo = prompt("Tipo (bravo zulu, livro bravo ou parte de ocorrencia):", atual.tipo);
       let tipo = (novoTipo || "").trim().toLowerCase();
-      if (tipo !== "positiva" && tipo !== "negativa") tipo = atual.tipo;
+      const tiposValidos = ["bravo zulu", "livro bravo", "parte de ocorrencia"];
+      if (!tiposValidos.includes(tipo)) tipo = atual.tipo;
 
       aluno.notas[idx].texto = txt;
       aluno.notas[idx].tipo = tipo;
